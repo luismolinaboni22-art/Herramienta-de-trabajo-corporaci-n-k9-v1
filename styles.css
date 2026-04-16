@@ -1462,3 +1462,71 @@ select option { background:#fff; color:var(--text); }
 .hmod-card:hover .btn-ghost-sm i {
   transform: translateX(4px);
 }
+
+/* ── PREMIUM MODULE HEADER ────────────────────────────────── */
+.module-hero {
+  background: var(--navy-d) url('banner.jpg.png') no-repeat center center;
+  background-size: cover;
+  border-radius: 12px;
+  padding: 30px 40px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.module-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(6,12,25,0.95) 0%, rgba(6,12,25,0.6) 100%);
+  z-index: 1;
+}
+
+.mh-content { position: relative; z-index: 2; }
+.mh-content h1 { font-family: var(--fh); font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 4px; display: flex; align-items: center; gap: 12px; }
+.mh-content h1 i { color: var(--gold); }
+.mh-content p { font-size: 13px; color: rgba(255,255,255,0.5); font-weight: 500; }
+
+.mh-actions { position: relative; z-index: 2; }
+
+/* ── REFINED EMPTY DASH ───────────────────────────────────── */
+.empty-dash-tactical {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 80px 40px;
+  background: rgba(255,255,255,0.5);
+  border: 1.5px dashed rgba(30,43,82,0.15);
+  border-radius: 16px;
+  margin-top: 20px;
+  backdrop-filter: blur(5px);
+}
+
+.empty-dash-tactical i {
+  font-size: 64px;
+  color: var(--navy);
+  opacity: 0.15;
+  margin-bottom: 24px;
+}
+
+.empty-dash-tactical h3 {
+  font-family: var(--fh);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--navy);
+  margin-bottom: 10px;
+}
+
+.empty-dash-tactical p {
+  font-size: 14px;
+  color: var(--text-m);
+  max-width: 400px;
+  margin-bottom: 30px;
+  line-height: 1.6;
+}
