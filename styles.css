@@ -192,6 +192,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); min-hei
   border-bottom: 1px solid rgba(200,149,26,0.2);
   flex-shrink: 0;
   z-index: 900;
+  display: none;
 }
 .header-inner { display:flex; align-items:center; padding:0 30px; height:100%; }
 .header-clock { 

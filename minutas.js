@@ -19,30 +19,40 @@
 
         if (minutas.length === 0) {
             container.innerHTML = `
-                <div class="dash-section">
-                    <div class="ds-header">
-                        <h2><i class="fas fa-folder-open"></i> Historial de Minutas</h2>
+                <div class="module-hero">
+                    <div class="mh-content">
+                        <h1><i class="fas fa-file-signature"></i> Minutas de Reunión</h1>
+                        <p>Gestión de acuerdos, actas y seguimiento de compromisos de seguridad.</p>
+                    </div>
+                    <div class="mh-actions">
                         <button class="btn-gold" onclick="window.newMinuta()"><i class="fas fa-plus"></i> Nueva Minuta</button>
                     </div>
-                    <div class="empty-dash">
-                        <i class="fas fa-file-contract"></i>
-                        <h3>Sin minutas registradas</h3>
-                        <p>Comience creando la primera minuta de reunión de seguridad.</p>
-                        <button class="btn-primary" onclick="window.newMinuta()"><i class="fas fa-plus"></i> Crear Minuta</button>
-                    </div>
+                </div>
+                <div class="empty-dash-tactical">
+                    <i class="fas fa-folder-open"></i>
+                    <h3>Sin minutas registradas</h3>
+                    <p>Aún no hay actas en el historial. Comience creando la primera minuta de reunión para llevar un control profesional de sus acuerdos.</p>
+                    <button class="btn-primary" onclick="window.newMinuta()"><i class="fas fa-plus"></i> Crear Primera Minuta</button>
                 </div>
             `;
             return;
         }
 
         container.innerHTML = `
+            <div class="module-hero">
+                <div class="mh-content">
+                    <h1><i class="fas fa-file-signature"></i> Minutas de Reunión</h1>
+                    <p>Gestión de acuerdos y actas de seguridad patrimonial.</p>
+                </div>
+                <div class="mh-actions">
+                    <button class="btn-gold" onclick="window.newMinuta()"><i class="fas fa-plus"></i> Nueva Minuta</button>
+                </div>
+            </div>
+
             <div class="dash-section">
                 <div class="ds-header">
-                    <h2><i class="fas fa-folder-open"></i> Historial de Minutas</h2>
-                    <div class="ds-filters">
-                        <div class="search-box"><i class="fas fa-search"></i><input type="text" placeholder="Buscar minuta..." oninput="window.filterMinutas(this.value)"/></div>
-                        <button class="btn-gold" onclick="window.newMinuta()"><i class="fas fa-plus"></i> Nueva</button>
-                    </div>
+                    <h2><i class="fas fa-list-check"></i> Historial de Minutas (${minutas.length})</h2>
+                    <div class="search-box"><i class="fas fa-search"></i><input type="text" placeholder="Buscar por cliente o fecha..." oninput="window.filterMinutas(this.value)"/></div>
                 </div>
                 <div class="eval-list" id="minutasContainer">
                     ${minutas.map(m => renderMinutaCard(m)).join('')}

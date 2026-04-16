@@ -25,6 +25,15 @@
         const fullDateStr = now.toLocaleDateString('es-CR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase();
 
         container.innerHTML = `
+            <div class="module-hero">
+                <div class="mh-content">
+                    <h1><i class="fas fa-book"></i> Bitácora Virtual</h1>
+                    <p>Registro diario de novedades, sugerencias e incidencias operativas.</p>
+                </div>
+                <div class="mh-actions">
+                     <div class="bitacora-header-date" id="b_display_date">${fullDateStr}</div>
+                </div>
+            </div>
             <div class="bitacora-layout">
                 <!-- FORM PANEL (LEFT) -->
                 <section class="bitacora-card bitacora-form-panel">

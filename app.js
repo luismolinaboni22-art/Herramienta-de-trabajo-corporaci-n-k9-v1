@@ -12,6 +12,11 @@ document.addEventListener('DOMContentLoaded', () => {
   switchModule('home');
 });
 
+function toggleMainHeader(show) {
+  const header = document.getElementById('appHeader');
+  if (header) header.style.display = show ? 'block' : 'none';
+}
+
 /* ── Persist ─────────────────────────────────────────────── */
 function saveDB() { localStorage.setItem('patrimonial_evals', JSON.stringify(DB)); }
 
@@ -117,12 +122,16 @@ function switchModule(moduleName) {
 
   // Specific initializations
   if (moduleName === 'home') {
+    toggleMainHeader(false); // Hide black space
     renderHomeDashboard();
   } else if (moduleName === 'risks') {
+    toggleMainHeader(false); // Hide black space
     renderDashboard();
   } else if (moduleName === 'minutas') {
+    toggleMainHeader(false); // Hide black space
     if (window.initMinutas) window.initMinutas();
   } else if (moduleName === 'bitacora') {
+    toggleMainHeader(false); // Hide black space
     if (window.initBitacora) window.initBitacora();
   }
 }
@@ -337,6 +346,7 @@ async function openEvaluation(id) {
   if (migratedPhotos || updatedQuestions) saveDB();
   
   currentSection = 1;
+  toggleMainHeader(true); // Show black space during evaluation
   document.getElementById('viewDashboard').style.display = 'none';
   document.getElementById('viewEvaluation').style.display = 'flex';
   document.getElementById('btnBackDash').style.display = 'flex';

@@ -68,7 +68,6 @@
         <div class="header-right">
           <div id="autoSaveStatus" class="autosave-status"></div>
           <button class="btn-ghost-sm" id="btnBackDash" onclick="confirmBackDashboard()" style="display:none"><i class="fas fa-arrow-left"></i> Dashboard</button>
-          <div class="header-clock" id="headerClock">--:--:--</div>
         </div>
       </div>
       <div class="header-progress-bar" id="headerProgress" style="display:none">
@@ -122,8 +121,6 @@
             <div class="dsb-item"><span class="dsb-dot"></span><span>ESTADO</span><span class="dsb-val">SISTEMA OPERATIVO</span></div>
             <span class="dsb-sep">|</span>
             <div class="dsb-item"><span class="dsb-dot gold"></span><span>UNIDAD</span><span class="dsb-val">K-9 CORP · DASHBOARD UNIT</span></div>
-            <span class="dsb-sep">|</span>
-            <div class="dsb-item"><i class="fas fa-clock" style="opacity:.4"></i><span id="dsbTime" class="dsb-val">--:--:--</span></div>
           </div>
 
           <!-- ── EVALUACIONES REGISTRADAS ──────── -->
@@ -142,10 +139,6 @@
 
       <!-- MODULE: MINUTAS DE REUNIÓN -->
       <div id="moduleMinutas" class="module-view">
-        <div class="module-header p-4">
-          <h1><i class="fas fa-file-signature text-gold"></i> Minutas de Reunión</h1>
-          <p class="text-xs text-muted">Gestión de acuerdos y actas de seguridad</p>
-        </div>
         <div id="viewMinutasList" class="view active p-4">
            <!-- History and search here -->
            <div class="empty-dash">
@@ -158,17 +151,18 @@
 
       <!-- MODULE: BITÁCORA VIRTUAL -->
       <div id="moduleBitacora" class="module-view">
-        <div class="module-header p-4">
-          <h1><i class="fas fa-book text-gold"></i> Bitácora Virtual</h1>
-          <p class="text-xs text-muted">Registro diario de novedades y eventos</p>
-        </div>
         <div id="viewBitacoraForm" class="view active p-4">
-           <!-- Form and history here -->
-           <div class="empty-dash">
-             <i class="fas fa-book-open"></i>
-             <h3>Módulo de Bitácora</h3>
-             <p>Este módulo será implementado a continuación.</p>
-           </div>
+           <!-- History and search here -->
+           <section class="bitacora-card bitacora-history-panel">
+               <div class="bitacora-history-header">
+                   <h2 class="bitacora-section-title">REGISTROS DEL DÍA</h2>
+                   <div style="display:flex; gap:12px; align-items:center">
+                       <button class="btn-report-monthly" onclick="window.openReportConfig()">
+                           <i class="fas fa-file-pdf"></i> REPORTE MENSUAL
+                       </button>
+                   </div>
+               </div>
+           </section>
         </div>
       </div>
 
