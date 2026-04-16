@@ -7,6 +7,11 @@ let DB = JSON.parse(localStorage.getItem('patrimonial_evals') || '[]');
 let currentEval = null;
 let currentSection = 1;
 
+// Initialize on Load
+document.addEventListener('DOMContentLoaded', () => {
+  switchModule('home');
+});
+
 /* ── Persist ─────────────────────────────────────────────── */
 function saveDB() { localStorage.setItem('patrimonial_evals', JSON.stringify(DB)); }
 
@@ -97,11 +102,140 @@ function importDatabase(event) {
   reader.readAsText(file);
 }
 
-/* ── Clock (status bar only) ─────────────────────────────── */
+/* ── NAVIGATION (MODULE SWITCHER) ───────────────────────── */
+function switchModule(moduleName) {
+  // Hide all modules
+  document.querySelectorAll('.module-view').forEach(m => m.classList.remove('active'));
+  document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+  
+  // Show target module
+  const targetModule = document.getElementById('module' + moduleName.charAt(0).toUpperCase() + moduleName.slice(1));
+  if (targetModule) targetModule.classList.add('active');
+  
+  const targetMenu = document.getElementById('menu-' + moduleName);
+  if (targetMenu) targetMenu.classList.add('active');
+
+  // Specific initializations
+  if (moduleName === 'home') {
+    renderHomeDashboard();
+  } else if (moduleName === 'risks') {
+    renderDashboard();
+  } else if (moduleName === 'minutas') {
+    if (window.initMinutas) window.initMinutas();
+  } else if (moduleName === 'bitacora') {
+    if (window.initBitacora) window.initBitacora();
+  }
+}
+
+/* ── HOME DASHBOARD RENDER ────────────────────────────── */
+function renderHomeDashboard() {
+  const container = document.getElementById('viewHomeDashboard');
+  if (!container) return;
+
+  // Gather Metrics
+  const totalEvals = DB.length;
+  const avgCompliance = DB.length > 0 
+    ? Math.round(DB.reduce((sum, ev) => sum + (computeOverallScore(ev) || 0), 0) / DB.length) 
+    : 0;
+  
+  const minutas = JSON.parse(localStorage.getItem('k9_minutas') || '[]');
+  const totalMinutas = minutas.length;
+  const lastMinuta = minutas.length > 0 ? minutas[minutas.length - 1].fecha : '--/--/----';
+
+  const bitacora = JSON.parse(localStorage.getItem('k9_bitacora') || '[]');
+  const totalLogs = bitacora.length;
+  const lastLog = bitacora.length > 0 ? bitacora[bitacora.length - 1].date : '--/--/----';
+
+  container.innerHTML = `
+    <div class="home-dash">
+      <div class="home-hero">
+        <div class="dash-hero-scanline"></div>
+        <div class="home-hero-content">
+          <div class="dash-corp-tag"><i class="fas fa-tower-observation"></i> COMMAND CENTER · ONLINE</div>
+          <h1>Centro de <span class="accent">operaciones</span></h1>
+          <p>Bienvenido al Sistema Integral de Gestión Corporación K-9. Supervise el estado de seguridad, gestione acuerdos y controle la bitácora operativa desde un solo lugar.</p>
+        </div>
+      </div>
+
+      <div class="home-grid">
+        <!-- STATS ROW -->
+        <div class="home-stats-row">
+          <div class="hstat-card">
+            <div class="hstat-icon"><i class="fas fa-shield-halved"></i></div>
+            <div class="hstat-info">
+              <div class="hstat-num">${totalEvals}</div>
+              <div class="hstat-label">EVALUACIONES DE RIESGO</div>
+            </div>
+            <div class="hstat-meta">${avgCompliance}% CUMPLIMIENTO PROM.</div>
+          </div>
+          <div class="hstat-card">
+            <div class="hstat-icon"><i class="fas fa-file-signature"></i></div>
+            <div class="hstat-info">
+              <div class="hstat-num">${totalMinutas}</div>
+              <div class="hstat-label">REUNIONES REGISTRADAS</div>
+            </div>
+            <div class="hstat-meta">ÚLTIMA: ${lastMinuta}</div>
+          </div>
+          <div class="hstat-card">
+            <div class="hstat-icon"><i class="fas fa-book"></i></div>
+            <div class="hstat-info">
+              <div class="hstat-num">${totalLogs}</div>
+              <div class="hstat-label">REGISTROS DE BITÁCORA</div>
+            </div>
+            <div class="hstat-meta">ÚLTIMO EVENTO: ${lastLog}</div>
+          </div>
+        </div>
+
+        <!-- MODULE CARDS -->
+        <div class="home-modules-row">
+          <div class="hmod-card" onclick="switchModule('risks')">
+            <div class="hmod-img-placeholder" style="background: linear-gradient(135deg, #0f172a, #1e3a8a)">
+               <i class="fas fa-shield-halved"></i>
+            </div>
+            <div class="hmod-body">
+              <h3>Análisis de Riesgos</h3>
+              <p>Evaluación técnica de seguridad patrimonial y física.</p>
+              <button class="btn-ghost-sm">ACCEDER <i class="fas fa-arrow-right"></i></button>
+            </div>
+          </div>
+
+          <div class="hmod-card" onclick="switchModule('minutas')">
+            <div class="hmod-img-placeholder" style="background: linear-gradient(135deg, #1c1917, #78350f)">
+               <i class="fas fa-file-signature"></i>
+            </div>
+            <div class="hmod-body">
+              <h3>Minutas de Reunión</h3>
+              <p>Gestión de acuerdos, actas y seguimiento de compromisos.</p>
+              <button class="btn-ghost-sm">ACCEDER <i class="fas fa-arrow-right"></i></button>
+            </div>
+          </div>
+
+          <div class="hmod-card" onclick="switchModule('bitacora')">
+            <div class="hmod-img-placeholder" style="background: linear-gradient(135deg, #064e3b, #06201a)">
+               <i class="fas fa-book"></i>
+            </div>
+            <div class="hmod-body">
+              <h3>Bitácora Virtual</h3>
+              <p>Registro diario de novedades, sugerencias e incidencias.</p>
+              <button class="btn-ghost-sm">ACCEDER <i class="fas fa-arrow-right"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ── Clock Update ────────────────────────────────────────── */
 function tick() {
-  const timeStr = new Date().toLocaleTimeString('es-CR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('es-CR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
   const dsb = document.getElementById('dsbTime');
+  const hClock = document.getElementById('headerClock');
+  const hClockLarge = document.getElementById('homeClockLarge');
   if (dsb) dsb.textContent = timeStr;
+  if (hClock) hClock.textContent = timeStr;
+  if (hClockLarge) hClockLarge.textContent = timeStr;
 }
 setInterval(tick, 1000); tick();
 
@@ -277,6 +411,7 @@ function showWizard() {
 }
 
 function showDashboard() {
+  switchModule('risks'); // Ensure we are on the risks module
   document.getElementById('viewDashboard').style.display = 'block';
   document.getElementById('viewEvaluation').style.display = 'none';
   document.getElementById('evalBreadcrumb').style.display = 'none';

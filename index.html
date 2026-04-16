@@ -14,133 +14,166 @@
 </head>
 <body>
 
-<!-- HEADER -->
-<header class="header" id="appHeader">
-  <div class="header-inner">
-    <a href="index.html" class="header-logo">
-      <img src="logo.png" alt="Logo Corporación K-9" class="header-logo-img">
-    </a>
-    <div class="header-divider"></div>
-    <div class="header-center" id="evalBreadcrumb" style="display:none">
-      <span class="bc-label"><i class="fas fa-file-shield"></i> Evaluación en curso:</span>
-      <span class="bc-site" id="bcSiteName">–</span>
+<div class="app-layout">
+  <!-- ── SIDEBAR (LEFT) ── -->
+  <aside class="app-sidebar">
+    <div class="sidebar-top">
+      <img src="logo.png" alt="Logo K-9" class="sidebar-logo">
+      <div class="sidebar-brand">CORPORACIÓN K-9</div>
     </div>
-    <div class="header-right">
-      <div id="autoSaveStatus" class="autosave-status"></div>
-      <button class="btn-ghost-sm" id="btnBackDash" onclick="confirmBackDashboard()" style="display:none"><i class="fas fa-arrow-left"></i> Dashboard</button>
+    
+    <nav class="sidebar-menu">
+      <div class="menu-label">CENTRO DE OPERACIONES</div>
+
+      <button class="menu-item active" onclick="switchModule('home')" id="menu-home">
+        <i class="fas fa-desktop"></i>
+        <span>Dashboard Central</span>
+      </button>
+
+      <button class="menu-item" onclick="switchModule('risks')" id="menu-risks">
+        <i class="fas fa-shield-halved"></i>
+        <span>Análisis de Riesgos</span>
+      </button>
+      
+      <button class="menu-item" onclick="switchModule('minutas')" id="menu-minutas">
+        <i class="fas fa-file-signature"></i>
+        <span>Minutas de Reunión</span>
+      </button>
+      
+      <button class="menu-item" onclick="switchModule('bitacora')" id="menu-bitacora">
+        <i class="fas fa-book"></i>
+        <span>Bitácora Virtual</span>
+      </button>
+    </nav>
+    
+    <div class="sidebar-footer">
+      <div class="sf-status">
+        <span class="status-dot"></span>
+        SISTEMA EN LÍNEA
+      </div>
+      <div class="sf-version">v4.0.0 TACTICAL</div>
     </div>
-  </div>
-  <div class="header-progress-bar" id="headerProgress" style="display:none">
-    <div class="hpb-fill" id="hpbFill"></div>
-  </div>
-</header>
+  </aside>
 
-<!-- ══════════════════════════════════════════
-     VIEW: DASHBOARD
-══════════════════════════════════════════ -->
-  <div id="viewDashboard" class="view active">
-
-  <!-- ── HERO SECTION ─────────────────── -->
-  <div class="dash-hero">
-    <div class="dash-hero-scanline"></div>
-
-    <!-- K-9 Watermark Shield SVG -->
-    <svg class="dash-hero-shield" viewBox="0 0 100 110" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M50 4L8 20v34c0 22 18 40 42 52 24-12 42-30 42-52V20L50 4Z" stroke="#C8951A" stroke-width="2"/>
-      <path d="M50 14L17 27v27c0 17 14 31 33 41 19-10 33-24 33-41V27L50 14Z" stroke="#C8951A" stroke-width="1" opacity=".4"/>
-      <path d="M36 50l9 9 20-20" stroke="#C8951A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-
-    <div class="dash-hero-inner">
-      <div class="dash-hero-content">
-        <div class="dash-corp-tag">
-          <i class="fas fa-shield-dog"></i>
-          CORPORACIÓN K-9 · SISTEMA ACTIVO
+  <!-- ── MAIN CONTENT ── -->
+  <main class="app-main">
+    
+    <!-- HEADER (Moved inside main for layout clarity) -->
+    <header class="header" id="appHeader">
+      <div class="header-inner">
+        <div class="header-center" id="evalBreadcrumb" style="display:none">
+          <span class="bc-label"><i class="fas fa-file-shield"></i> Evaluación en curso:</span>
+          <span class="bc-site" id="bcSiteName">–</span>
         </div>
-        <h1><i class="fas fa-shield-halved"></i> Análisis de Riesgos <span class="accent">Patrimonial</span></h1>
-        <p>Herramienta corporativa de la <strong style="color:var(--gold)">Corporación K-9 Seguridad</strong> para la evaluación integral de seguridad física. Complete las 17 secciones, adjunte fotografías y descargue el informe en PDF.</p>
-        <div class="dash-hero-actions">
-          <button class="btn-gold btn-lg" onclick="startNewEvaluation()"><i class="fas fa-plus"></i> Nueva Evaluación</button>
-          <button class="btn-ghost-sm" onclick="document.getElementById('importInput').click()" style="padding:10px 18px;font-size:12px"><i class="fas fa-file-import"></i> Importar</button>
-          <input type="file" id="importInput" style="display:none" accept=".json" onchange="importDatabase(event)"/>
+        <div class="header-right">
+          <div id="autoSaveStatus" class="autosave-status"></div>
+          <button class="btn-ghost-sm" id="btnBackDash" onclick="confirmBackDashboard()" style="display:none"><i class="fas fa-arrow-left"></i> Dashboard</button>
+          <div class="header-clock" id="headerClock">--:--:--</div>
+        </div>
+      </div>
+      <div class="header-progress-bar" id="headerProgress" style="display:none">
+        <div class="hpb-fill" id="hpbFill"></div>
+      </div>
+    </header>
+
+    <div class="module-container">
+      
+      <!-- MODULE: HOME DASHBOARD -->
+      <div id="moduleHome" class="module-view active">
+        <div id="viewHomeDashboard" class="view active">
+           <!-- Dynamic home content goes here -->
         </div>
       </div>
 
-      <div class="dash-hero-stats">
-        <div class="hs-card">
-          <div class="hs-num" id="hsTotal">0</div>
-          <div class="hs-label"><i class="fas fa-folder" style="margin-right:4px;opacity:.5"></i>Total</div>
-        </div>
-        <div class="hs-card hs-critico">
-          <div class="hs-num" id="hsCritico">0</div>
-          <div class="hs-label"><i class="fas fa-circle-exclamation" style="margin-right:4px;opacity:.5"></i>Crítico</div>
-        </div>
-        <div class="hs-card hs-deficiente">
-          <div class="hs-num" id="hsDeficiente">0</div>
-          <div class="hs-label"><i class="fas fa-triangle-exclamation" style="margin-right:4px;opacity:.5"></i>Deficiente</div>
-        </div>
-        <div class="hs-card hs-aceptable">
-          <div class="hs-num" id="hsAceptable">0</div>
-          <div class="hs-label"><i class="fas fa-circle-check" style="margin-right:4px;opacity:.5"></i>Aceptable</div>
-        </div>
-      </div>
-    </div>
-  </div>
+      <!-- MODULE: ANÁLISIS DE RIESGOS -->
+      <div id="moduleRisks" class="module-view">
+        <!-- ── DASHBOARD VIEW (Inside Risks) ── -->
+        <div id="viewDashboard" class="view active">
+          <!-- ── HERO SECTION ─────────────────── -->
+          <div class="dash-hero">
+            <div class="dash-hero-scanline"></div>
+            <svg class="dash-hero-shield" viewBox="0 0 100 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M50 4L8 20v34c0 22 18 40 42 52 24-12 42-30 42-52V20L50 4Z" stroke="#C8951A" stroke-width="2"/>
+              <path d="M50 14L17 27v27c0 17 14 31 33 41 19-10 33-24 33-41V27L50 14Z" stroke="#C8951A" stroke-width="1" opacity=".4"/>
+              <path d="M36 50l9 9 20-20" stroke="#C8951A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <div class="dash-hero-inner">
+              <div class="dash-hero-content">
+                <div class="dash-corp-tag"><i class="fas fa-shield-dog"></i> CORPORACIÓN K-9 · SISTEMA ACTIVO</div>
+                <h1><i class="fas fa-shield-halved"></i> Análisis de Riesgos <span class="accent">Patrimonial</span></h1>
+                <p>Herramienta corporativa para la evaluación integral de seguridad física. Complete las secciones, adjunte fotografías y descargue el informe en PDF.</p>
+                <div class="dash-hero-actions">
+                  <button class="btn-gold btn-lg" onclick="startNewEvaluation()"><i class="fas fa-plus"></i> Nueva Evaluación</button>
+                  <button class="btn-ghost-sm" onclick="document.getElementById('importInput').click()"><i class="fas fa-file-import"></i> Importar</button>
+                  <input type="file" id="importInput" style="display:none" accept=".json" onchange="importDatabase(event)"/>
+                </div>
+              </div>
+              <div class="dash-hero-stats">
+                <div class="hs-card"><div class="hs-num" id="hsTotal">0</div><div class="hs-label">Total</div></div>
+                <div class="hs-card hs-critico"><div class="hs-num" id="hsCritico">0</div><div class="hs-label">Crítico</div></div>
+                <div class="hs-card hs-deficiente"><div class="hs-num" id="hsDeficiente">0</div><div class="hs-label">Deficiente</div></div>
+                <div class="hs-card hs-aceptable"><div class="hs-num" id="hsAceptable">0</div><div class="hs-label">Aceptable</div></div>
+              </div>
+            </div>
+          </div>
 
-  <!-- ── TACTICAL STATUS BAR ───────────── -->
-  <div class="dash-status-bar">
-    <div class="dsb-item">
-      <span class="dsb-dot"></span>
-      <span>ESTADO</span>
-      <span class="dsb-val">SISTEMA OPERATIVO</span>
-    </div>
-    <span class="dsb-sep">|</span>
-    <div class="dsb-item">
-      <span class="dsb-dot gold"></span>
-      <span>UNIDAD</span>
-      <span class="dsb-val">K-9 CORP · CR-001</span>
-    </div>
-    <span class="dsb-sep">|</span>
-    <div class="dsb-item">
-      <i class="fas fa-satellite-dish" style="color:rgba(255,255,255,.3);font-size:9px"></i>
-      <span>MONITOREO ACTIVO</span>
-    </div>
-    <span class="dsb-sep">|</span>
-    <div class="dsb-item">
-      <i class="fas fa-lock" style="color:rgba(255,255,255,.3);font-size:9px"></i>
-      <span>MÓDULO</span>
-      <span class="dsb-val">ANÁLISIS PATRIMONIAL v3</span>
-    </div>
-    <div class="dsb-right dsb-item" id="dsbTimestamp">
-      <i class="fas fa-clock" style="opacity:.4;font-size:9px"></i>
-      <span id="dsbTime" class="dsb-val">--:--:--</span>
-    </div>
-  </div>
+          <!-- ── TACTICAL STATUS BAR ───────────── -->
+          <div class="dash-status-bar">
+            <div class="dsb-item"><span class="dsb-dot"></span><span>ESTADO</span><span class="dsb-val">SISTEMA OPERATIVO</span></div>
+            <span class="dsb-sep">|</span>
+            <div class="dsb-item"><span class="dsb-dot gold"></span><span>UNIDAD</span><span class="dsb-val">K-9 CORP · DASHBOARD UNIT</span></div>
+            <span class="dsb-sep">|</span>
+            <div class="dsb-item"><i class="fas fa-clock" style="opacity:.4"></i><span id="dsbTime" class="dsb-val">--:--:--</span></div>
+          </div>
 
-  <!-- ── EVALUACIONES REGISTRADAS ──────── -->
-  <div class="dash-section">
-    <div class="ds-header">
-      <h2><i class="fas fa-folder-open"></i> Evaluaciones Registradas</h2>
-      <div class="ds-filters" style="display:flex;align-items:center;gap:12px">
-        <div class="search-box">
-          <i class="fas fa-search"></i>
-          <input type="text" id="dashSearch" placeholder="Buscar sitio, evaluador..." oninput="renderDashboard()"/>
-        </div>
-        <div class="dash-admin-actions">
-          <button class="btn-ghost-sm" onclick="exportDatabase()" title="Exportar Respaldo (JSON)"><i class="fas fa-file-export"></i> Exportar</button>
+          <!-- ── EVALUACIONES REGISTRADAS ──────── -->
+          <div class="dash-section">
+            <div class="ds-header">
+              <h2><i class="fas fa-folder-open"></i> Evaluaciones Registradas</h2>
+              <div class="ds-filters">
+                <div class="search-box"><i class="fas fa-search"></i><input type="text" id="dashSearch" placeholder="Buscar sitio..." oninput="renderDashboard()"/></div>
+                <button class="btn-ghost-sm" onclick="exportDatabase()"><i class="fas fa-file-export"></i> Exp.</button>
+              </div>
+            </div>
+            <div id="evalList" class="eval-list"></div>
+          </div>
         </div>
       </div>
-    </div>
-    <div id="evalList" class="eval-list">
-      <div class="empty-dash">
-        <i class="fas fa-file-circle-plus"></i>
-        <h3>Sin evaluaciones registradas</h3>
-        <p>Comience creando la primera evaluación de seguridad patrimonial.</p>
-        <button class="btn-primary" onclick="startNewEvaluation()"><i class="fas fa-plus"></i> Comenzar ahora</button>
+
+      <!-- MODULE: MINUTAS DE REUNIÓN -->
+      <div id="moduleMinutas" class="module-view">
+        <div class="module-header p-4">
+          <h1><i class="fas fa-file-signature text-gold"></i> Minutas de Reunión</h1>
+          <p class="text-xs text-muted">Gestión de acuerdos y actas de seguridad</p>
+        </div>
+        <div id="viewMinutasList" class="view active p-4">
+           <!-- History and search here -->
+           <div class="empty-dash">
+             <i class="fas fa-file-contract"></i>
+             <h3>Módulo de Minutas</h3>
+             <p>Este módulo será implementado a continuación.</p>
+           </div>
+        </div>
       </div>
-    </div>
-  </div>
-</div>
+
+      <!-- MODULE: BITÁCORA VIRTUAL -->
+      <div id="moduleBitacora" class="module-view">
+        <div class="module-header p-4">
+          <h1><i class="fas fa-book text-gold"></i> Bitácora Virtual</h1>
+          <p class="text-xs text-muted">Registro diario de novedades y eventos</p>
+        </div>
+        <div id="viewBitacoraForm" class="view active p-4">
+           <!-- Form and history here -->
+           <div class="empty-dash">
+             <i class="fas fa-book-open"></i>
+             <h3>Módulo de Bitácora</h3>
+             <p>Este módulo será implementado a continuación.</p>
+           </div>
+        </div>
+      </div>
+
+    </div> <!-- end module-container -->
+
 
 <!-- ══════════════════════════════════════════
      VIEW: EVALUATION WIZARD
@@ -215,12 +248,13 @@
 
 <!-- TOAST -->
 <div id="toast" class="toast"></div>
-
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 <script src="storage.js"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>
+<script src="bitacora.js"></script>
+<script src="minutas.js"></script>
 <script src="photos.js"></script>
 </body>
 </html>
