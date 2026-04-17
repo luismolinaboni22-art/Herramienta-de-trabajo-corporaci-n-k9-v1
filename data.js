@@ -264,7 +264,7 @@ function newEvalTemplate() {
   const allPhotoKeys = [...SCORED_SECTIONS, 's1','s2','s3','s6','s7','s8','s18','s19a'];
   SCORED_SECTIONS.forEach(sk => {
     if (sk === 's19a') return; // already set above with custom fields
-    const items = (CHECKLISTS[sk]||[]).map((t,i) => ({ id:i, text:t, score:null, obs:'' }));
+    const items = (CHECKLISTS[sk]||[]).map((t,i) => ({ id:i, text:t, score:null, obs:'', actions:'' }));
     template[sk] = { items, observaciones:'' };
     // Campos específicos para S9
     if (sk === 's9') {

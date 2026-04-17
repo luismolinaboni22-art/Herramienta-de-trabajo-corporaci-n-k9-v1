@@ -113,26 +113,47 @@ function switchModule(moduleName) {
   document.querySelectorAll('.module-view').forEach(m => m.classList.remove('active'));
   document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
   
+  // Bug fix: Hide Evaluation Wizard and reset header state
+  const evalView = document.getElementById('viewEvaluation');
+  if (evalView) evalView.style.display = 'none';
+  
+  const bc = document.getElementById('evalBreadcrumb'); if (bc) bc.style.display = 'none';
+  const bb = document.getElementById('btnBackDash'); if (bb) bb.style.display = 'none';
+  const hp = document.getElementById('headerProgress'); if (hp) hp.style.display = 'none';
+
   // Show target module
   const targetModule = document.getElementById('module' + moduleName.charAt(0).toUpperCase() + moduleName.slice(1));
-  if (targetModule) targetModule.classList.add('active');
+  if (targetModule) {
+    targetModule.classList.add('active');
+    // Ensure the dashboard view is visible within moduleRisks
+    if (moduleName === 'risks') {
+        const vd = document.getElementById('viewDashboard');
+        if (vd) vd.style.display = 'block';
+    }
+  }
   
   const targetMenu = document.getElementById('menu-' + moduleName);
   if (targetMenu) targetMenu.classList.add('active');
 
   // Specific initializations
   if (moduleName === 'home') {
-    toggleMainHeader(false); // Hide black space
+    toggleMainHeader(false);
     renderHomeDashboard();
   } else if (moduleName === 'risks') {
-    toggleMainHeader(false); // Hide black space
+    toggleMainHeader(false);
     renderDashboard();
   } else if (moduleName === 'minutas') {
-    toggleMainHeader(false); // Hide black space
+    toggleMainHeader(false);
     if (window.initMinutas) window.initMinutas();
   } else if (moduleName === 'bitacora') {
-    toggleMainHeader(false); // Hide black space
+    toggleMainHeader(false);
     if (window.initBitacora) window.initBitacora();
+  } else if (moduleName === 'incidentes') {
+    toggleMainHeader(false);
+    if (window.initIncidentes) window.initIncidentes();
+  } else if (moduleName === 'clientes') {
+    toggleMainHeader(false);
+    if (window.initClientes) window.initClientes();
   }
 }
 
@@ -141,94 +162,107 @@ function renderHomeDashboard() {
   const container = document.getElementById('viewHomeDashboard');
   if (!container) return;
 
-  // Gather Metrics
-  const totalEvals = DB.length;
-  const avgCompliance = DB.length > 0 
-    ? Math.round(DB.reduce((sum, ev) => sum + (computeOverallScore(ev) || 0), 0) / DB.length) 
-    : 0;
-  
-  const minutas = JSON.parse(localStorage.getItem('k9_minutas') || '[]');
-  const totalMinutas = minutas.length;
-  const lastMinuta = minutas.length > 0 ? minutas[minutas.length - 1].fecha : '--/--/----';
-
+  const clients = JSON.parse(localStorage.getItem('k9_clientes') || '[]');
   const bitacora = JSON.parse(localStorage.getItem('k9_bitacora') || '[]');
-  const totalLogs = bitacora.length;
-  const lastLog = bitacora.length > 0 ? bitacora[bitacora.length - 1].date : '--/--/----';
+  
+  // Risk Analysis Semaphore Logic
+  const riskStatusList = clients.map(client => {
+    const clientEvals = DB.filter(e => (e.s1.nombreSitio || '').toLowerCase().includes(client.nombre.toLowerCase()));
+    const latest = clientEvals.sort((a,b) => new Date(b.updatedAt) - new Date(a.updatedAt))[0];
+    
+    let status = 'red';
+    let label = 'PENDIENTE';
+    let dateStr = 'Sin registro';
+    let expiryStr = '--';
+    
+    if (latest) {
+      const evalDate = new Date(latest.updatedAt);
+      const diffMonths = (new Date() - evalDate) / (1000 * 60 * 60 * 24 * 30);
+      if (diffMonths < 6) { status = 'green'; label = 'AL DÍA'; }
+      dateStr = evalDate.toLocaleDateString();
+      const expiryDate = new Date(evalDate);
+      expiryDate.setMonth(expiryDate.getMonth() + 6);
+      expiryStr = expiryDate.toLocaleDateString();
+    }
+    return { name: client.nombre, status, label, date: dateStr, expiry: expiryStr };
+  });
+
+  // Bitacora Alerts Logic
+  const pendingAlerts = bitacora.filter(l => l.classification === 'TEMAS PENDIENTES' && l.dueDate).map(l => {
+    const due = new Date(l.dueDate);
+    const today = new Date();
+    const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+    let alertLevel = 'info';
+    if (diffDays < 0) alertLevel = 'red';
+    else if (diffDays <= 7) alertLevel = 'yellow';
+    return { description: l.description, dueDate: due.toLocaleDateString(), level: alertLevel, daysLeft: diffDays };
+  }).sort((a,b) => a.daysLeft - b.daysLeft);
 
   container.innerHTML = `
     <div class="home-dash">
       <div class="home-hero">
         <div class="dash-hero-scanline"></div>
         <div class="home-hero-content">
-          <div class="dash-corp-tag"><i class="fas fa-tower-observation"></i> COMMAND CENTER · ONLINE</div>
-          <h1>Centro de <span class="accent">operaciones</span></h1>
-          <p>Bienvenido al Sistema Integral de Gestión Corporación K-9. Supervise el estado de seguridad, gestione acuerdos y controle la bitácora operativa desde un solo lugar.</p>
+          <div class="home-hero-text">
+            <div class="dash-corp-tag"><i class="fas fa-tower-observation"></i> COMMAND CENTER · ONLINE</div>
+            <h1>Centro de <span class="accent">Operaciones</span></h1>
+            <p>Supervisión táctica de riesgos, compromisos y bitácora operativa de Corporación K-9 Internacional.</p>
+          </div>
+          <div class="home-hero-stats">
+            <div class="hero-stat">
+              <div class="hero-stat-value">${clients.length}</div>
+              <div class="hero-stat-label">Clientes</div>
+            </div>
+            <div class="hero-stat">
+              <div class="hero-stat-value">${DB.length}</div>
+              <div class="hero-stat-label">Análisis</div>
+            </div>
+            <div class="hero-stat">
+              <div class="hero-stat-value">${pendingAlerts.length}</div>
+              <div class="hero-stat-label">Alertas</div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="home-grid">
-        <!-- STATS ROW -->
-        <div class="home-stats-row">
-          <div class="hstat-card">
-            <div class="hstat-icon"><i class="fas fa-shield-halved"></i></div>
-            <div class="hstat-info">
-              <div class="hstat-num">${totalEvals}</div>
-              <div class="hstat-label">EVALUACIONES DE RIESGO</div>
-            </div>
-            <div class="hstat-meta">${avgCompliance}% CUMPLIMIENTO PROM.</div>
+      <div class="home-grid-wrapper">
+        <!-- SEMAPHORE SECTION -->
+        <div class="home-section-card">
+          <div class="home-section-title">
+            <i class="fas fa-traffic-light"></i> Cumplimiento de Análisis
           </div>
-          <div class="hstat-card">
-            <div class="hstat-icon"><i class="fas fa-file-signature"></i></div>
-            <div class="hstat-info">
-              <div class="hstat-num">${totalMinutas}</div>
-              <div class="hstat-label">REUNIONES REGISTRADAS</div>
-            </div>
-            <div class="hstat-meta">ÚLTIMA: ${lastMinuta}</div>
-          </div>
-          <div class="hstat-card">
-            <div class="hstat-icon"><i class="fas fa-book"></i></div>
-            <div class="hstat-info">
-              <div class="hstat-num">${totalLogs}</div>
-              <div class="hstat-label">REGISTROS DE BITÁCORA</div>
-            </div>
-            <div class="hstat-meta">ÚLTIMO EVENTO: ${lastLog}</div>
-          </div>
+          ${riskStatusList.length === 0
+            ? `<div class="empty-state"><i class="fas fa-building-user"></i>No hay clientes registrados.</div>`
+            : riskStatusList.map(r => `
+              <div class="sem-card-item">
+                <div class="sem-dot ${r.status}"></div>
+                <div>
+                  <div class="sem-info-name">${r.name}</div>
+                  <div class="sem-info-sub">Realizado: ${r.date} &nbsp;|&nbsp; Próximo: ${r.expiry}</div>
+                </div>
+                <span class="sem-badge ${r.status}">${r.label}</span>
+              </div>
+            `).join('')}
         </div>
 
-        <!-- MODULE CARDS -->
-        <div class="home-modules-row">
-          <div class="hmod-card" onclick="switchModule('risks')">
-            <div class="hmod-img-placeholder" style="background: linear-gradient(135deg, #0f172a, #1e3a8a)">
-               <i class="fas fa-shield-halved"></i>
-            </div>
-            <div class="hmod-body">
-              <h3>Análisis de Riesgos</h3>
-              <p>Evaluación técnica de seguridad patrimonial y física.</p>
-              <button class="btn-ghost-sm">ACCEDER <i class="fas fa-arrow-right"></i></button>
-            </div>
+        <!-- ALERTS SECTION -->
+        <div class="home-section-card">
+          <div class="home-section-title">
+            <i class="fas fa-bell"></i> Alertas de Compromisos
           </div>
-
-          <div class="hmod-card" onclick="switchModule('minutas')">
-            <div class="hmod-img-placeholder" style="background: linear-gradient(135deg, #1c1917, #78350f)">
-               <i class="fas fa-file-signature"></i>
-            </div>
-            <div class="hmod-body">
-              <h3>Minutas de Reunión</h3>
-              <p>Gestión de acuerdos, actas y seguimiento de compromisos.</p>
-              <button class="btn-ghost-sm">ACCEDER <i class="fas fa-arrow-right"></i></button>
-            </div>
-          </div>
-
-          <div class="hmod-card" onclick="switchModule('bitacora')">
-            <div class="hmod-img-placeholder" style="background: linear-gradient(135deg, #064e3b, #06201a)">
-               <i class="fas fa-book"></i>
-            </div>
-            <div class="hmod-body">
-              <h3>Bitácora Virtual</h3>
-              <p>Registro diario de novedades, sugerencias e incidencias.</p>
-              <button class="btn-ghost-sm">ACCEDER <i class="fas fa-arrow-right"></i></button>
-            </div>
-          </div>
+          ${pendingAlerts.length === 0
+            ? `<div class="empty-state"><i class="fas fa-check-circle"></i>No hay temas pendientes con fecha registrada.</div>`
+            : pendingAlerts.map(a => `
+              <div class="alert-card-item ${a.level}">
+                <div class="alert-icon-box ${a.level}">
+                  <i class="fas ${a.level === 'red' ? 'fa-triangle-exclamation' : 'fa-clock'}"></i>
+                </div>
+                <div>
+                  <div class="alert-card-desc">${a.description}</div>
+                  <div class="alert-card-meta">Vence el: ${a.dueDate} &nbsp;${a.daysLeft < 0 ? '<b style="color:var(--critico)">[VENCIDO]</b>' : '(' + a.daysLeft + ' días)'}</div>
+                </div>
+              </div>
+            `).join('')}
         </div>
       </div>
     </div>
@@ -310,7 +344,7 @@ function renderDashboard() {
     const sitio = ev.s1.nombreSitio || 'Sin nombre';
     const badge = `<span class="ec-badge badge-${nivel}">${scoreToLabel(pct)}</span>`;
     return `<div class="eval-card nivel-${nivel}" onclick="openEvaluation('${ev.id}')">
-      <div class="ec-score"><span class="ec-score-num">${scoreDisp}</span><span class="ec-score-pct">Cumpl.</span></div>
+      <div class="ec-score blink-slow"><span class="ec-score-num">${scoreDisp}</span><span class="ec-score-pct">Cumpl.</span></div>
       <div class="ec-info">
         <div class="ec-title">${sitio}</div>
         <div class="ec-sub">
@@ -346,13 +380,13 @@ async function openEvaluation(id) {
   if (migratedPhotos || updatedQuestions) saveDB();
   
   currentSection = 1;
-  toggleMainHeader(true); // Show black space during evaluation
+  toggleMainHeader(false); // Hide black space during evaluation
   document.getElementById('viewDashboard').style.display = 'none';
   document.getElementById('viewEvaluation').style.display = 'flex';
   document.getElementById('btnBackDash').style.display = 'flex';
   document.getElementById('headerProgress').style.display = 'block';
-  document.getElementById('evalBreadcrumb').style.display = 'flex';
-  document.getElementById('bcSiteName').textContent = currentEval.s1.nombreSitio || 'Sitio Sin Nombre';
+  document.getElementById('eval-hero-site-name').textContent = currentEval.s1.nombreSitio || 'Sitio Sin Nombre';
+  document.getElementById('eval-hero-subtitle').textContent = `Evaluador: ${currentEval.s1.evaluador || 'No asignado'} | ${currentEval.s1.fecha || ''} | AUDITORÍA ACTIVA`;
   
   buildSidebarNav();
   goToSection(1);
@@ -491,6 +525,15 @@ function updateSidebar() {
   }
   const completed = SECTIONS.filter(s=>isSectionDone(s.key)).length;
   document.getElementById('sbCompleted').textContent = completed;
+
+  // Hero Stats update
+  const hPct = document.getElementById('eval-hero-total-pct');
+  const hCard = document.getElementById('eval-hero-score-card');
+  if (hPct && hCard) {
+    hPct.textContent = (overall || 0) + '%';
+    hCard.style.borderColor = scoreColor(overall);
+    hCard.className = 'hs-card ' + (overall < 50 ? 'hs-critico' : overall < 85 ? 'hs-deficiente' : 'hs-aceptable');
+  }
   // progress bar
   const pct = (currentSection / SECTIONS.length) * 100;
   document.getElementById('hpbFill').style.width = pct+'%';
@@ -509,6 +552,10 @@ function goToSection(num) {
   document.getElementById('eshNum').textContent = sec.roman;
   document.getElementById('eshTitle').textContent = sec.title;
   document.getElementById('eshDesc').textContent = sec.desc;
+  
+  // Hero section update
+  const hSec = document.getElementById('eval-hero-section-num');
+  if (hSec) hSec.textContent = num;
   const scorePnl = document.getElementById('eshScore');
   if (sec.type==='scored') {
     const pct = computeSectionScore(sec.key, currentEval);
@@ -631,6 +678,8 @@ function flushCurrentSection() {
         const texts = Array.from(listEl.querySelectorAll('.finding-text')).map(t => t.value.trim());
         it.obs = texts;
       }
+      const actionsEl = document.getElementById(`${sec.key}_actions${i}`);
+      if (actionsEl) it.actions = actionsEl.value.trim();
     });
       const secObsEl = document.getElementById(`${sec.key}_section_obs`);
       if (secObsEl) currentEval[sec.key].observaciones = secObsEl.value;
@@ -1230,9 +1279,13 @@ function renderScored(key, title) {
     return `<tr>
       <td class="item-num">${i+1}</td>
       <td><span class="item-text">${it.text}</span>
-        <div class="item-obs${it.score==='NC'||it.score==='CP'||findings.length>0?' show':''}" id="${obsContId}">
-          <div class="findings-list" id="${key}_item${i}_list">${findingsHtml}</div>
-          <button class="btn-add-finding" onclick="addFinding('${key}', ${i})"><i class="fas fa-plus"></i> Agregar Hallazgo</button>
+        <div class="item-obs${it.score==='NC'||it.score==='CP'||findings.length>0||it.actions?' show':''}" id="${obsContId}">
+          <div class="findings-list" id="${key}_item${i}_list">
+            <div class="finding-label"><i class="fas fa-search"></i> Hallazgos / Observaciones:</div>
+            ${findingsHtml}
+          </div>
+          <button class="btn-add-finding" onclick="addFinding('${key}', ${i})" style="margin-bottom:12px"><i class="fas fa-plus"></i> Agregar Hallazgo</button>
+          </div>
         </div>
       </td>
       <td style="text-align:center">${mkR('C','C')}</td>
@@ -1556,17 +1609,25 @@ function renderActionItem(ac, i) {
     </div>
     <div class="ai-body" id="acbody${i}">
       <div class="ai-grid">
-        <div class="ai-group" style="grid-column:1/-1"><span class="ai-label">Hallazgo / Ítem No Cumplido</span>
-          <input class="ai-input" id="ac_${i}_hallazgo" value="${ac.hallazgo||''}" placeholder="Describa el hallazgo..."/></div>
-        <div class="ai-group" style="grid-column:1/-1"><span class="ai-label">Acción Correctiva Requerida</span>
-          <input class="ai-input" id="ac_${i}_accion" value="${ac.accion||''}" placeholder="Acción a implementar..."/></div>
-        <div class="ai-group"><span class="ai-label">Responsable</span>
+        <div class="ai-group col-12"><span class="ai-label">Hallazgo / Ítem No Cumplido</span>
+          <div class="field-mic-wrapper">
+            <textarea class="ai-textarea" id="ac_${i}_hallazgo" placeholder="Describa el hallazgo...">${ac.hallazgo||''}</textarea>
+            <button class="btn-field-mic-ui" onclick="activateVoiceField('ac_${i}_hallazgo')" title="Dictar por voz"><i class="fas fa-microphone"></i></button>
+          </div>
+        </div>
+        <div class="ai-group col-12"><span class="ai-label">Acción Correctiva Requerida</span>
+          <div class="field-mic-wrapper">
+            <textarea class="ai-textarea" id="ac_${i}_accion" placeholder="Acción a implementar...">${ac.accion||''}</textarea>
+            <button class="btn-field-mic-ui" onclick="activateVoiceField('ac_${i}_accion')" title="Dictar por voz"><i class="fas fa-microphone"></i></button>
+          </div>
+        </div>
+        <div class="ai-group col-4"><span class="ai-label">Responsable</span>
           <input class="ai-input" id="ac_${i}_responsable" value="${ac.responsable||''}" placeholder="Nombre / Cargo"/></div>
-        <div class="ai-group"><span class="ai-label">Fecha Límite</span>
+        <div class="ai-group col-3"><span class="ai-label">Fecha Límite</span>
           <input class="ai-input" type="date" id="ac_${i}_fecha" value="${ac.fecha||''}"/></div>
-        <div class="ai-group"><span class="ai-label">Prioridad</span>
+        <div class="ai-group col-2"><span class="ai-label">Prioridad</span>
           <select class="ai-input" id="ac_${i}_prioridad">${prioOpts}</select></div>
-        <div class="ai-group"><span class="ai-label">Estado</span>
+        <div class="ai-group col-3"><span class="ai-label">Estado</span>
           <select class="ai-input" id="ac_${i}_estado">${statOpts}</select></div>
       </div>
     </div>

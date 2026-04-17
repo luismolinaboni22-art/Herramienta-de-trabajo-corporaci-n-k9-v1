@@ -1,449 +1,372 @@
 'use strict';
 
-(function() {
+(function () {
     const STORAGE_KEY = 'k9_bitacora';
-    let entries = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    let currentEntryPhotos = [];
+    const CONFIG_KEY  = 'k9_bitacora_config';
 
-    window.initBitacora = function() {
-        const dateInput = document.getElementById('b_filter_date');
-        if (dateInput && !dateInput.value) {
-            dateInput.value = new Date().toISOString().split('T')[0];
-        }
-        renderBitacoraView();
-    };
+    let logs = [];
+    let reportConfig = {};
+    let selectedPhotos = [];
+    let recognition = null;
+    let isRecording = false;
 
-    function saveEntries() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    const CATEGORIES = [
+        "NOVEDADES RECIENTES",
+        "DETALLE DE SUPERVISIÓN EJECUTIVA",
+        "ACUERDOS RECIENTES",
+        "Actualización de riesgos",
+        "SUGERENCIAS DE SEGURIDAD",
+        "MEJORAS OPERATIVAS",
+        "TEMAS PENDIENTES",
+        "INVERSIONES PENDIENTES",
+        "NOTAS"
+    ];
+
+    function load() {
+        try { logs = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e) { logs = []; }
+        try { reportConfig = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}'); } catch(e) { reportConfig = {}; }
+        if (!reportConfig.executive) reportConfig.executive = 'Manuel Ángel López Guevara';
+        if (!reportConfig.clientContact) reportConfig.clientContact = 'Guillermo González';
+        if (!reportConfig.alertLevel) reportConfig.alertLevel = 'Medio';
     }
 
-    function renderBitacoraView() {
-        const container = document.getElementById('moduleBitacora');
-        if (!container) return;
+    function saveLogs() { localStorage.setItem(STORAGE_KEY, JSON.stringify(logs)); }
+    function saveConfig() { localStorage.setItem(CONFIG_KEY, JSON.stringify(reportConfig)); }
 
-        const now = new Date();
-        const fullDateStr = now.toLocaleDateString('es-CR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase();
-
-        container.innerHTML = `
-            <div class="module-hero">
-                <div class="mh-content">
-                    <h1><i class="fas fa-book"></i> Bitácora Virtual</h1>
-                    <p>Registro diario de novedades, sugerencias e incidencias operativas.</p>
-                </div>
-                <div class="mh-actions">
-                     <div class="bitacora-header-date" id="b_display_date">${fullDateStr}</div>
-                </div>
-            </div>
-            <div class="bitacora-layout">
-                <!-- FORM PANEL (LEFT) -->
-                <section class="bitacora-card bitacora-form-panel">
-                    <h2 class="bitacora-section-title">REGISTRO DE ACTIVIDAD</h2>
-                    
-                    <div class="form-group" style="margin-bottom: 20px;">
-                        <label class="bitacora-label"><i class="fas fa-calendar-day" style="color:var(--gold); margin-right:8px;"></i> FECHA DEL REGISTRO</label>
-                        <input type="date" id="b_filter_date" class="bitacora-input" onchange="window.renderBitacoraHistory()">
-                    </div>
-
-                    <div class="form-group" style="margin-bottom: 20px;">
-                        <label class="bitacora-label"><i class="fas fa-tags" style="color:var(--gold); margin-right:8px;"></i> CLASIFICACIÓN</label>
-                        <select id="b_class" class="bitacora-select">
-                            <option value="">Seleccione Clasificación</option>
-                            <option value="NOVEDADES RECIENTES">NOVEDADES RECIENTES</option>
-                            <option value="DETALLE DE SUPERVISIÓN EJECUTIVA">DETALLE DE SUPERVISIÓN EJECUTIVA</option>
-                            <option value="ACUERDOS RECIENTES">ACUERDOS RECIENTES</option>
-                            <option value="Actualización de riesgos">Actualización de riesgos</option>
-                            <option value="SUGERENCIAS DE SEGURIDAD:MEJORAS OPERATIVAS">SUGERENCIAS DE SEGURIDAD:MEJORAS OPERATIVAS</option>
-                            <option value="TEMAS PENDIENTES:">TEMAS PENDIENTES:</option>
-                            <option value="INVERSIONES PENDIENTES">INVERSIONES PENDIENTES</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group" style="margin-bottom: 20px;">
-                        <label class="bitacora-label"><i class="fas fa-file-lines" style="color:var(--gold); margin-right:8px;"></i> DESCRIPCIÓN DETALLADA</label>
-                        <textarea id="b_desc" class="bitacora-textarea" placeholder="Describa la actividad o novedad..."></textarea>
-                    </div>
-                    
-                    <div class="form-group" style="margin-bottom: 25px;">
-                        <label class="bitacora-label"><i class="fas fa-camera" style="color:var(--gold); margin-right:8px;"></i> EVIDENCIA FOTOGRÁFICA</label>
-                        <div class="bitacora-photo-input-wrapper">
-                            <input type="file" id="b_photo_input" accept="image/*" multiple onchange="window.handleBitacoraPhotos(this)">
-                        </div>
-                        <div class="photo-grid" id="b_photo_grid" style="margin-top:10px"></div>
-                    </div>
-
-                    <button class="btn-bitacora-save" onclick="window.saveBitacoraEntry()">
-                        <i class="fas fa-save"></i> GUARDAR EN BITÁCORA
-                    </button>
-                </section>
-
-                <!-- HISTORY PANEL (RIGHT) -->
-                <section class="bitacora-card bitacora-history-panel">
-                    <div class="bitacora-history-header">
-                        <h2 class="bitacora-section-title">REGISTROS DEL DÍA</h2>
-                        <div style="display:flex; gap:12px; align-items:center">
-                            <button class="btn-report-monthly" onclick="window.openReportConfig()">
-                                <i class="fas fa-file-pdf"></i> REPORTE MENSUAL
-                            </button>
-                            <div class="bitacora-header-date" id="b_display_date">${fullDateStr}</div>
-                        </div>
-                    </div>
-
-                    <div id="bitacoraHistoryContainer" class="bitacora-history-content">
-                        <!-- Entries rendered here -->
-                    </div>
-                </section>
-            </div>
-
-            <!-- MODAL DE CONFIGURACIÓN DEL REPORTE -->
-            <div id="modalReport" class="modal-overlay">
-                <div class="modal-box config-modal">
-                    <div class="modal-header tactical">
-                        <div style="display:flex; align-items:center; gap:10px">
-                             <i class="fas fa-file-invoice" style="color:var(--teal)"></i>
-                             <div>
-                                 <h3 style="margin:0; font-size:16px">CONFIGURACIÓN DEL REPORTE</h3>
-                                 <p style="margin:0; font-size:10px; opacity:0.7">BITÁCORA VIRTUAL - FORMATO OFICIAL</p>
-                             </div>
-                        </div>
-                    </div>
-                    <div class="modal-body">
-                        <div class="form-grid-2">
-                            <div class="form-group">
-                                <label class="bitacora-label">FECHA INICIO</label>
-                                <input type="date" id="rep_start" class="bitacora-input">
-                            </div>
-                            <div class="form-group">
-                                <label class="bitacora-label">FECHA FIN</label>
-                                <input type="date" id="rep_end" class="bitacora-input">
-                            </div>
-                        </div>
-                        <div class="form-group" style="margin-top:10px">
-                            <label class="bitacora-label">NOMBRE DEL CLIENTE / ENTIDAD</label>
-                            <input type="text" id="rep_client" class="bitacora-input" placeholder="Nombre completo">
-                        </div>
-                        <div class="form-group" style="margin-top:10px">
-                            <label class="bitacora-label">NIVEL DE ALERTA</label>
-                            <select id="rep_alert" class="bitacora-select">
-                                <option value="Bajo">Bajo</option>
-                                <option value="Medio" selected>Medio</option>
-                                <option value="Alto">Alto</option>
-                                <option value="Crítico">Crítico</option>
-                            </select>
-                        </div>
-                        <div class="form-group" style="margin-top:10px">
-                            <label class="bitacora-label">EJECUTIVO(S) K-9</label>
-                            <input type="text" id="rep_execs" class="bitacora-input" placeholder="Nombres de ejecutivos">
-                        </div>
-                        <div class="form-group" style="margin-top:10px">
-                            <label class="bitacora-label">CONTACTO CLIENTE</label>
-                            <input type="text" id="rep_contact" class="bitacora-input" placeholder="Nombre del contacto">
-                        </div>
-                    </div>
-                    <div class="modal-footer" style="padding: 20px; border-top: none">
-                        <button class="btn-ghost" onclick="window.closeReportModal()">CANCELAR</button>
-                        <button class="btn-report-gen" onclick="window.generateMonthlyReport()">GENERAR REPORTE FINAL</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        // Match the date picker to the current day
-        const dateInput = document.getElementById('b_filter_date');
-        if (dateInput) {
-            dateInput.value = new Date().toISOString().split('T')[0];
+    // ── INIT ─────────────────────────────────────────────────────
+    window.initBitacora = function () {
+        load();
+        const dateEl = document.getElementById('bit-date');
+        if (dateEl) {
+            if (!dateEl.value) dateEl.value = new Date().toISOString().split('T')[0];
+            dateEl.onchange = renderHistory;
         }
-        
-        window.renderBitacoraHistory();
-    }
-
-    window.handleBitacoraPhotos = async function(input) {
-        if (!input.files) return;
-        const grid = document.getElementById('b_photo_grid');
-        for (const file of input.files) {
-            const base64 = await toBase64(file);
-            currentEntryPhotos.push(base64);
-            const thumb = document.createElement('div');
-            thumb.className = 'photo-thumb';
-            thumb.innerHTML = `<img src="${base64}"><button class="photo-thumb-del" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>`;
-            grid.insertBefore(thumb, grid.firstChild);
-        }
-        input.value = '';
+        loadConfigToUI();
+        renderHistory();
+        renderStats();
+        initVoice();
     };
 
-    window.saveBitacoraEntry = function() {
-        const cls = document.getElementById('b_class').value;
-        const desc = document.getElementById('b_desc').value.trim();
-        const date = document.getElementById('b_filter_date').value;
+    // ── STATS ─────────────────────────────────────────────────────
+    function renderStats() {
+        const today = new Date().toISOString().split('T')[0];
+        const el1 = document.getElementById('bit-stat-total');
+        const el2 = document.getElementById('bit-stat-today');
+        if (el1) el1.textContent = logs.length;
+        if (el2) el2.textContent = logs.filter(l => l.date === today).length;
+    }
 
-        if (!cls || !desc) {
-            alert('Por favor complete la clasificación y descripción.');
-            return;
-        }
+    // ── SAVE ENTRY ────────────────────────────────────────────────
+    window.saveBitacoraEntry = function (e) {
+        e.preventDefault();
+        const date   = document.getElementById('bit-date').value;
+        const cat    = document.getElementById('bit-classification').value;
+        const desc   = document.getElementById('bit-description').value.trim();
+        const dueEl  = document.getElementById('bit-due-date');
+        if (!date || !cat || !desc) return;
 
-        const newEntry = {
-            id: 'bit_' + Date.now(),
-            date: date,
-            classification: cls,
+        const entry = {
+            id: Date.now().toString(),
+            date,
+            classification: cat,
             description: desc,
-            photos: [...currentEntryPhotos],
-            timestamp: new Date().toISOString()
+            dueDate: dueEl ? dueEl.value : '',
+            photos: [...selectedPhotos],
+            createdAt: new Date().toISOString()
         };
 
-        entries.unshift(newEntry);
-        saveEntries();
-        currentEntryPhotos = [];
-        renderBitacoraView();
-        if (window.showToast) window.showToast('Entrada registrada.', 'success');
+        logs.unshift(entry);
+        saveLogs();
+        selectedPhotos = [];
+
+        const preview = document.getElementById('bit-photos-preview');
+        if (preview) preview.innerHTML = '';
+        const photoInput = document.getElementById('bit-photos');
+        if (photoInput) photoInput.value = '';
+        document.getElementById('bit-description').value = '';
+        document.getElementById('bit-classification').value = '';
+
+        renderHistory();
+        renderStats();
+        if (window.showToast) window.showToast('Registro guardado.', 'success');
     };
 
-    window.renderBitacoraHistory = function() {
-        const historyContainer = document.getElementById('bitacoraHistoryContainer');
-        const filterDateInput = document.getElementById('b_filter_date');
-        const dateDisplay = document.getElementById('b_display_date');
-        
-        if (!historyContainer || !filterDateInput) return;
+    // ── HISTORY ───────────────────────────────────────────────────
+    function renderHistory() {
+        const dateEl = document.getElementById('bit-date');
+        const listEl = document.getElementById('bitacora-list');
+        const dispEl = document.getElementById('bit-history-date-display');
+        if (!listEl) return;
 
-        const filterDate = filterDateInput.value;
-        
-        // Update display date
-        if (dateDisplay && filterDate) {
-            const d = new Date(filterDate + 'T12:00:00');
-            dateDisplay.textContent = d.toLocaleDateString('es-CR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).toUpperCase();
+        const selectedDate = dateEl ? dateEl.value : new Date().toISOString().split('T')[0];
+        const dayLogs = logs.filter(l => l.date === selectedDate);
+
+        if (dispEl) {
+            const d = new Date(selectedDate + 'T12:00:00');
+            dispEl.textContent = d.toLocaleDateString('es-CR', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
         }
 
-        const filtered = entries.filter(e => e.date === filterDate);
-
-        if (filtered.length === 0) {
-            historyContainer.innerHTML = `
-                <div class="bitacora-empty-state">
-                    <i class="fas fa-book-open"></i>
-                    <p>No hay registros para la fecha seleccionada.</p>
-                </div>
-            `;
+        if (dayLogs.length === 0) {
+            listEl.innerHTML = `<div style="text-align:center;padding:40px;opacity:0.5;"><i class="fas fa-book-open" style="font-size:32px;display:block;margin-bottom:12px;"></i>Sin registros para este día.</div>`;
             return;
         }
 
-        historyContainer.innerHTML = filtered.map(e => `
-            <div class="eval-card" style="cursor:default">
-                <div class="ec-info">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px">
-                        <span class="ec-badge" style="background:var(--navy-xl); color:var(--navy)">${e.classification}</span>
-                        <span style="font-size:10px; color:var(--text-d)">${new Date(e.timestamp).toLocaleTimeString()}</span>
+        listEl.innerHTML = dayLogs.map(l => `
+            <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+                    <span style="font-size:9px;font-weight:800;background:var(--navy);color:var(--gold);padding:3px 10px;border-radius:20px;text-transform:uppercase;">${l.classification}</span>
+                    <div style="display:flex;gap:8px;">
+                        <button onclick="window.deleteBitacoraEntry('${l.id}')" style="background:rgba(201,27,56,0.1);border:1px solid rgba(201,27,56,0.3);color:var(--critico);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px;"><i class="fas fa-trash"></i></button>
                     </div>
-                    <div class="ec-title" style="font-size:13px; font-weight:500; white-space:pre-line">${e.description}</div>
-                    ${e.photos.length > 0 ? `
-                        <div class="photo-grid" style="margin-top:10px">
-                            ${e.photos.map(p => `<div class="photo-thumb" style="width:50px; height:50px"><img src="${p}" onclick="window.viewBitacoraPhoto('${p}')" style="cursor:pointer"></div>`).join('')}
-                        </div>
-                    ` : ''}
                 </div>
-                <div class="ec-actions">
-                    <button class="btn-icon del" onclick="window.deleteBitacoraEntry('${e.id}')"><i class="fas fa-trash"></i></button>
-                </div>
+                <p style="font-size:12px;color:var(--text);line-height:1.6;white-space:pre-wrap;">${l.description}</p>
+                ${l.dueDate ? `<div style="font-size:10px;color:var(--gold);margin-top:8px;"><i class="fas fa-clock"></i> Fecha compromiso: ${l.dueDate}</div>` : ''}
+                ${l.photos && l.photos.length > 0 ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">${l.photos.map(p => `<img src="${p}" style="width:80px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border);">`).join('')}</div>` : ''}
             </div>
         `).join('');
+    }
+
+    // ── DELETE ────────────────────────────────────────────────────
+    window.deleteBitacoraEntry = function (id) {
+        if (!confirm('¿Eliminar este registro?')) return;
+        logs = logs.filter(l => l.id !== id);
+        saveLogs();
+        renderHistory();
+        renderStats();
     };
 
-    window.deleteBitacoraEntry = function(id) {
-        if (confirm('¿Eliminar este registro?')) {
-            entries = entries.filter(e => e.id !== id);
-            saveEntries();
-            window.renderBitacoraHistory();
+    // ── PHOTOS ────────────────────────────────────────────────────
+    window.previewBitacoraPhotos = function (input) {
+        selectedPhotos = [];
+        const preview = document.getElementById('bit-photos-preview');
+        if (!preview) return;
+        preview.innerHTML = '';
+        const files = Array.from(input.files || []);
+        files.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = e => {
+                selectedPhotos.push(e.target.result);
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.style.cssText = 'width:70px;height:55px;object-fit:cover;border-radius:6px;border:1px solid var(--border);';
+                preview.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+    };
+
+    // ── VOICE ─────────────────────────────────────────────────────
+    function initVoice() {
+        const mic = document.getElementById('bit-mic');
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            if (mic) mic.style.display = 'none';
+            return;
         }
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SR();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'es-ES';
+        recognition.onresult = e => {
+            let t = '';
+            for (let i = e.resultIndex; i < e.results.length; i++) t += e.results[i][0].transcript;
+            const ta = document.getElementById('bit-description');
+            if (ta) ta.value = t;
+        };
+        recognition.onerror = () => { isRecording = false; updateMicUI(); };
+        recognition.onend  = () => { if (isRecording) { isRecording = false; updateMicUI(); } };
+    }
+
+    function updateMicUI() {
+        const mic = document.getElementById('bit-mic');
+        if (!mic) return;
+        mic.style.background = isRecording ? 'var(--critico)' : '';
+        mic.innerHTML = isRecording ? '<i class="fas fa-stop"></i>' : '<i class="fas fa-microphone"></i>';
+    }
+
+    window.toggleBitacoraVoice = function () {
+        if (!recognition) return;
+        if (isRecording) { recognition.stop(); isRecording = false; }
+        else { recognition.start(); isRecording = true; }
+        updateMicUI();
     };
 
-    window.openReportConfig = function() {
-        const modal = document.getElementById('modalReport');
-        if (!modal) return;
-        
-        // Default dates: start and end of current month
-        const now = new Date();
-        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
-        
-        document.getElementById('rep_start').value = firstDay;
-        document.getElementById('rep_end').value = lastDay;
-        
-        // Auto-fill client if possible
-        if (window.DB && window.DB.length > 0) {
-            const lastEval = window.DB[0];
-            document.getElementById('rep_client').value = lastEval.s1.empresa || '';
-        }
-        
-        modal.classList.add('open');
+    // ── SIGNATURE ─────────────────────────────────────────────────
+    window.uploadBitacoraSignature = function (input) {
+        if (!input.files || !input.files[0]) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+            localStorage.setItem('k9_evaluator_signature', e.target.result);
+            const prev = document.getElementById('bit-sig-preview');
+            if (prev) prev.innerHTML = `<img src="${e.target.result}" style="max-width:100%;max-height:100%;object-fit:contain;">`;
+            if (window.showToast) window.showToast('Firma cargada.', 'success');
+        };
+        reader.readAsDataURL(input.files[0]);
     };
 
-    window.closeReportModal = function() {
-        document.getElementById('modalReport').classList.remove('open');
+    // ── CONFIG UI ─────────────────────────────────────────────────
+    function loadConfigToUI() {
+        const f = id => document.getElementById(id);
+        if (f('cfg-client-name'))    f('cfg-client-name').value    = reportConfig.clientName    || '';
+        if (f('cfg-alert-level'))    f('cfg-alert-level').value    = reportConfig.alertLevel    || 'Medio';
+        if (f('cfg-executive'))      f('cfg-executive').value      = reportConfig.executive     || '';
+        if (f('cfg-client-contact')) f('cfg-client-contact').value = reportConfig.clientContact || '';
+        const sig = localStorage.getItem('k9_evaluator_signature');
+        const prev = f('bit-sig-preview');
+        if (sig && prev) prev.innerHTML = `<img src="${sig}" style="max-width:100%;max-height:100%;object-fit:contain;">`;
+    }
+
+    function saveConfigFromUI() {
+        reportConfig = {
+            clientName:    (document.getElementById('cfg-client-name')    || {}).value || '',
+            alertLevel:    (document.getElementById('cfg-alert-level')    || {}).value || 'Medio',
+            executive:     (document.getElementById('cfg-executive')      || {}).value || '',
+            clientContact: (document.getElementById('cfg-client-contact') || {}).value || ''
+        };
+        saveConfig();
+    }
+
+    // ── MODAL ─────────────────────────────────────────────────────
+    window.k9_openBitacoraReportConfig = function () {
+        load();
+        loadConfigToUI();
+        const modal = document.getElementById('modalReportConfig');
+        if (modal) modal.style.display = 'flex';
     };
 
-    window.generateMonthlyReport = async function() {
-        const start = document.getElementById('rep_start').value;
-        const end = document.getElementById('rep_end').value;
-        const client = document.getElementById('rep_client').value || 'Sin Definir';
-        const alertLvl = document.getElementById('rep_alert').value;
-        const execs = document.getElementById('rep_execs').value || 'Sin Definir';
-        const contact = document.getElementById('rep_contact').value || 'Sin Definir';
+    window.closeReportConfig = function () {
+        const modal = document.getElementById('modalReportConfig');
+        if (modal) modal.style.display = 'none';
+    };
 
-        if (!start || !end) {
-            alert('Por favor defina el rango de fechas.');
+    // ── PDF GENERATION ────────────────────────────────────────────
+    window.generateBitacoraPDF = function () {
+        saveConfigFromUI();
+        window.closeReportConfig();
+
+        const now   = new Date();
+        const MONTHS = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+        const period = `${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
+
+        const monthLogs = logs.filter(l => {
+            const d = new Date(l.date + 'T12:00:00');
+            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        }).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        if (monthLogs.length === 0) {
+            alert('No hay registros en el mes actual para generar el reporte.');
             return;
         }
 
-        const dateStart = new Date(start + 'T00:00:00');
-        const dateEnd = new Date(end + 'T23:59:59');
+        const sig = localStorage.getItem('k9_evaluator_signature') || '';
+        const alertColor = reportConfig.alertLevel === 'Crítico' ? '#ef4444' :
+                           reportConfig.alertLevel === 'Alto'    ? '#f59e0b' :
+                           reportConfig.alertLevel === 'Medio'   ? '#3b82f6' : '#22c55e';
 
-        // Filter entries in range
-        const filteredEntries = entries.filter(e => {
-            const entryDate = new Date(e.date + 'T12:00:00');
-            return entryDate >= dateStart && entryDate <= dateEnd;
-        }).sort((a, b) => a.date.localeCompare(b.date));
-
-        // Group by category
-        const categories = {
-            'NOVEDADES RECIENTES': [],
-            'DETALLE DE SUPERVISIÓN EJECUTIVA': [],
-            'ACUERDOS RECIENTES': [],
-            'Actualización de riesgos': [],
-            'SUGERENCIAS DE SEGURIDAD:MEJORAS OPERATIVAS': [],
-            'TEMAS PENDIENTES:': [],
-            'INVERSIONES PENDIENTES': []
-        };
-
-        filteredEntries.forEach(e => {
-            if (categories[e.classification]) {
-                categories[e.classification].push(`[${e.date}] ${e.description}`);
-            }
-        });
-
-        const mapping = {
-            'NOVEDADES RECIENTES': 'NOVEDADES RECIENTES',
-            'DETALLE DE SUPERVISIÓN EJECUTIVA': 'SUPERVISIÓN EJECUTIVA',
-            'ACUERDOS RECIENTES': 'ACUERDOS RECIENTES',
-            'Actualización de riesgos': 'GESTIÓN DE RIESGOS',
-            'SUGERENCIAS DE SEGURIDAD:MEJORAS OPERATIVAS': 'MEJORAS OPERATIVAS',
-            'TEMAS PENDIENTES:': 'TEMAS PENDIENTES',
-            'INVERSIONES PENDIENTES': 'INVERSIONES PENDIENTES'
-        };
-
-        const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Reporte Mensual SIG - ${client}</title>
-            <style>
-                body { font-family: 'Inter', Arial, sans-serif; color: #333; margin: 0; padding: 20px; font-size: 11px; line-height: 1.4; }
-                .sig-header { width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #000; }
-                .sig-header td { border: 1px solid #000; padding: 5px; text-align: center; }
-                .sig-logo { width: 100px; height: 50px; object-fit: contain; }
-                .sig-title-box { background: #00102b; color: #fff; font-weight: 800; text-transform: uppercase; font-size: 14px; }
-                
-                .meta-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-                .meta-table td { padding: 8px 4px; border-bottom: 1px solid #eee; }
-                .meta-label { font-weight: 800; width: 150px; text-transform: uppercase; color: #00102b; }
-                .alert-badge { background: #ff9800; color: #fff; padding: 4px 12px; border-radius: 4px; font-weight: 800; }
-                
-                .content-table { width: 100%; border-collapse: collapse; border: 1px solid #999; }
-                .content-table th { background: #f4f4f4; border: 1px solid #999; padding: 10px; width: 180px; text-align: left; text-transform: uppercase; font-weight: 800; color: #00102b; }
-                .content-table td { border: 1px solid #999; padding: 10px; vertical-align: top; }
-                
-                .periodo-box { background: #00102b; color: #fff; padding: 8px; text-align: center; font-weight: 800; margin-bottom: 20px; border-radius: 4px; font-size: 12px; }
-                .no-data { color: #888; font-style: italic; }
-                @media print { .no-print { display: none; } }
-            </style>
-        </head>
-        <body>
-            <table class="sig-header">
-                <tr>
-                    <td rowspan="2" style="width:120px"><img src="logo.png" class="sig-logo"></td>
-                    <td class="sig-title-box" colspan="6">REPORTE MENSUAL DE CLIENTES<br>SISTEMA INTEGRAL DE GESTIÓN</td>
-                </tr>
-                <tr style="font-size: 8px;">
-                    <td>TIPO: Documento</td>
-                    <td>ÚLTIMA MODIF: ${new Date().toLocaleDateString()}</td>
-                    <td>APROBACIÓN: SIG</td>
-                    <td>CÓDIGO: OPS_FOR_014</td>
-                    <td>VERSIÓN: 3</td>
-                    <td>CONFIDENCIALIDAD: ${alertLvl.toUpperCase()}</td>
-                </tr>
-            </table>
-
-            <div class="periodo-box">PERIODO: ${start} - ${end}</div>
-
-            <table class="meta-table">
-                <tr>
-                    <td class="meta-label">CLIENTE / ENTIDAD:</td>
-                    <td style="font-size:14px; font-weight:800">
-                        <div style="display:flex; justify-content:space-between; align-items:center">
-                            <span>${client}</span>
-                            ${(() => {
-                                // Try to find a logo in the DB
-                                let logo = null;
-                                if (window.DB && window.DB.length > 0) {
-                                    const match = window.DB.find(ev => ev.s1 && ev.s1.clientLogo);
-                                    if (match) logo = match.s1.clientLogo;
-                                }
-                                return logo ? `<img src="${logo}" style="height:40px; max-width:150px; object-fit:contain">` : '';
-                            })()}
+        const sectionsHtml = CATEGORIES.map((cat, i) => {
+            const items = monthLogs.filter(l => l.classification === cat);
+            if (!items.length) return '';
+            return `
+                <div style="margin-top:28px;">
+                    <div style="background:#0f172a;color:white;padding:9px 16px;font-weight:800;font-size:11px;letter-spacing:1px;border-radius:4px;text-transform:uppercase;">
+                        ${i+1}. ${cat}
+                    </div>
+                    ${items.map(l => `
+                        <div style="padding:16px 4px;border-bottom:1px solid #e2e8f0;page-break-inside:avoid;">
+                            <div style="font-size:9px;font-weight:800;color:#c8951a;margin-bottom:6px;">FECHA: ${l.date}${l.dueDate ? ' &nbsp;|&nbsp; COMPROMISO: ' + l.dueDate : ''}</div>
+                            <div style="font-size:11px;color:#1e293b;line-height:1.7;white-space:pre-wrap;text-align:justify;">${l.description}</div>
+                            ${l.photos && l.photos.length ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">${l.photos.map(p=>`<img src="${p}" style="width:150px;height:100px;object-fit:cover;border-radius:4px;border:1px solid #cbd5e1;">`).join('')}</div>` : ''}
                         </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="meta-label">NIVEL DE ALERTA:</td>
-                    <td><span class="alert-badge">${alertLvl}</span></td>
-                </tr>
-                <tr>
-                    <td class="meta-label">EJECUTIVOS K-9:</td>
-                    <td>${execs}</td>
-                </tr>
-                <tr>
-                    <td class="meta-label">CONTACTO CLIENTE:</td>
-                    <td>${contact}</td>
-                </tr>
-            </table>
+                    `).join('')}
+                </div>`;
+        }).join('');
 
-            <table class="content-table">
-                ${Object.keys(mapping).map(formKey => {
-                    const reportKey = mapping[formKey];
-                    const items = categories[formKey] || [];
-                    const content = items.length > 0 ? items.join('<br><br>').replace(/\n/g, '<br>') : '<span class="no-data">Sin registros.</span>';
-                    return `
-                        <tr>
-                            <th>${reportKey}</th>
-                            <td>${content}</td>
-                        </tr>
-                    `;
-                }).join('')}
-                <tr>
-                    <th>NOTAS ADICIONALES:</th>
-                    <td></td>
-                </tr>
-            </table>
+        const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Reporte Bitácora – ${reportConfig.clientName || 'K-9'} – ${period}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', Arial, sans-serif; color: #1e293b; background: #fff; font-size: 11px; }
+  .page { padding: 40px 50px; }
+  table { border-collapse: collapse; width: 100%; }
+  td, th { border: 1.5px solid #0f172a; padding: 10px 14px; vertical-align: middle; }
+  .title-cell { text-align: center; font-weight: 800; font-size: 13px; background: #f1f5f9; letter-spacing: 0.5px; }
+  .meta-cell { font-size: 9.5px; line-height: 1.9; color: #475569; width: 200px; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 22px 0; }
+  .info-card { border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px 16px; background: #fdfdfd; }
+  .lbl { font-size: 8.5px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+  .val { font-size: 12px; font-weight: 600; color: #0f172a; }
+  .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; background: ${alertColor}; color: #fff; font-weight: 800; font-size: 9px; text-transform: uppercase; margin-top: 5px; }
+  .wm { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%) rotate(-45deg); font-size: 70px; font-weight: 900; color: rgba(15,23,42,0.03); pointer-events: none; white-space: nowrap; z-index: -1; }
+  .sig-area { margin-top: 80px; text-align: center; page-break-inside: avoid; }
+  .sig-line { width: 300px; margin: 0 auto; border-top: 2px solid #0f172a; padding-top: 8px; font-weight: 800; font-size: 12px; color: #0f172a; }
+  .print-bar { position: fixed; top: 0; left: 0; right: 0; background: #0f172a; color: #fff; padding: 10px 24px; display: flex; justify-content: space-between; align-items: center; z-index: 9999; font-size: 13px; font-weight: 600; }
+  .print-bar button { background: #c8951a; color: #fff; border: none; padding: 8px 20px; border-radius: 6px; font-weight: 700; font-size: 13px; cursor: pointer; }
+  .spacer { height: 46px; }
+  @media print { .print-bar, .spacer { display: none; } .page { padding: 20px 30px; } @page { margin: 1.5cm; } }
+</style>
+</head>
+<body>
+  <div class="print-bar">
+    <span style="color:#c8951a;font-weight:800;">⚙ Reporte Mensual – Bitácora K-9 · ${period}</span>
+    <button onclick="window.print()">🖨 Guardar como PDF</button>
+  </div>
+  <div class="spacer"></div>
+  <div class="page">
+    <div class="wm">CORPORACIÓN K-9 INTERNACIONAL</div>
 
-            <script>
-                window.onload = function() {
-                    window.print();
-                    // window.close(); 
-                }
-            </script>
-        </body>
-        </html>
-        `;
+    <table style="margin-bottom:22px;">
+      <tr>
+        <td class="title-cell">
+          REPORTE MENSUAL DE BITÁCORA VIRTUAL<br>
+          <span style="font-size:10px;font-weight:600;color:#64748b;">SUPERVISIÓN Y ACUERDOS ESTRATÉGICOS</span>
+        </td>
+        <td class="meta-cell">
+          <strong>CÓDIGO:</strong> SIG-K9-BIT-01<br>
+          <strong>PERIODO:</strong> ${period}<br>
+          <strong>GENERADO:</strong> ${new Date().toLocaleDateString('es-CR')}<br>
+          <strong>CONFIDENCIALIDAD:</strong> NIVEL 3
+        </td>
+      </tr>
+    </table>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="lbl">Cliente / Entidad</div>
+        <div class="val">${reportConfig.clientName || '—'}</div>
+        <div class="lbl" style="margin-top:12px;">Nivel de Alerta Operativa</div>
+        <div class="badge">${reportConfig.alertLevel || 'Medio'}</div>
+      </div>
+      <div class="info-card">
+        <div class="lbl">Ejecutivo Responsable K-9</div>
+        <div class="val">${reportConfig.executive || '—'}</div>
+        <div class="lbl" style="margin-top:12px;">Contacto del Cliente</div>
+        <div class="val">${reportConfig.clientContact || '—'}</div>
+      </div>
+    </div>
+
+    ${sectionsHtml}
+
+    <div class="sig-area">
+      ${sig ? `<img src="${sig}" style="max-width:200px;max-height:80px;object-fit:contain;display:block;margin:0 auto 12px;">` : '<div style="height:80px;"></div>'}
+      <div class="sig-line">${reportConfig.executive || 'Dirección de Operaciones'}</div>
+      <div style="font-size:10px;color:#64748b;margin-top:4px;">Dirección de Operaciones · Corporación K-9 Internacional</div>
+      <div style="font-size:8px;color:#94a3b8;margin-top:2px;">Generado por XIX Tactical Assistant</div>
+    </div>
+  </div>
+</body>
+</html>`;
 
         const win = window.open('', '_blank');
-        win.document.write(htmlContent);
-        win.document.close();
-        
-        window.closeReportModal();
+        if (win) {
+            win.document.write(html);
+            win.document.close();
+        } else {
+            alert('El navegador bloqueó la ventana emergente.\nPor favor permita pop-ups para este sitio e intente de nuevo.');
+        }
     };
-
-    function toBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
-        });
-    }
 
 })();

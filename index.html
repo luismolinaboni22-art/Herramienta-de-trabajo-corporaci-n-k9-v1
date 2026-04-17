@@ -30,6 +30,11 @@
         <span>Dashboard Central</span>
       </button>
 
+      <button class="menu-item" onclick="switchModule('clientes')" id="menu-clientes">
+        <i class="fas fa-building-user"></i>
+        <span>Información de Cliente</span>
+      </button>
+
       <button class="menu-item" onclick="switchModule('risks')" id="menu-risks">
         <i class="fas fa-shield-halved"></i>
         <span>Análisis de Riesgos</span>
@@ -43,6 +48,11 @@
       <button class="menu-item" onclick="switchModule('bitacora')" id="menu-bitacora">
         <i class="fas fa-book"></i>
         <span>Bitácora Virtual</span>
+      </button>
+
+      <button class="menu-item" onclick="switchModule('incidentes')" id="menu-incidentes">
+        <i class="fas fa-file-shield"></i>
+        <span>Informe de Incidentes</span>
       </button>
     </nav>
     
@@ -67,7 +77,7 @@
         </div>
         <div class="header-right">
           <div id="autoSaveStatus" class="autosave-status"></div>
-          <button class="btn-ghost-sm" id="btnBackDash" onclick="confirmBackDashboard()" style="display:none"><i class="fas fa-arrow-left"></i> Dashboard</button>
+          <button class="btn-gold" id="btnBackDash" onclick="confirmBackDashboard()" style="display:none; padding: 8px 16px; font-size: 13.5px;"><i class="fas fa-arrow-left"></i> Dashboard</button>
         </div>
       </div>
       <div class="header-progress-bar" id="headerProgress" style="display:none">
@@ -82,6 +92,11 @@
         <div id="viewHomeDashboard" class="view active">
            <!-- Dynamic home content goes here -->
         </div>
+      </div>
+
+      <!-- MODULE: CLIENTES -->
+      <div id="moduleClientes" class="module-view">
+         <!-- Rendered dynamically by clientes.js -->
       </div>
 
       <!-- MODULE: ANÁLISIS DE RIESGOS -->
@@ -139,32 +154,174 @@
 
       <!-- MODULE: MINUTAS DE REUNIÓN -->
       <div id="moduleMinutas" class="module-view">
-        <div id="viewMinutasList" class="view active p-4">
-           <!-- History and search here -->
-           <div class="empty-dash">
-             <i class="fas fa-file-contract"></i>
-             <h3>Módulo de Minutas</h3>
-             <p>Este módulo será implementado a continuación.</p>
-           </div>
+        <div id="viewMinutasList" class="view active">
+           <!-- Managed by minutas.js -->
+        </div>
+      </div>
+
+      <!-- MODULE: INFORME DE INCIDENTES -->
+      <div id="moduleIncidentes" class="module-view">
+        <div id="viewIncidentesList" class="view active">
+           <!-- Managed by incidentes.js -->
         </div>
       </div>
 
       <!-- MODULE: BITÁCORA VIRTUAL -->
       <div id="moduleBitacora" class="module-view">
-        <div id="viewBitacoraForm" class="view active p-4">
-           <!-- History and search here -->
-           <section class="bitacora-card bitacora-history-panel">
-               <div class="bitacora-history-header">
-                   <h2 class="bitacora-section-title">REGISTROS DEL DÍA</h2>
-                   <div style="display:flex; gap:12px; align-items:center">
-                       <button class="btn-report-monthly" onclick="window.openReportConfig()">
-                           <i class="fas fa-file-pdf"></i> REPORTE MENSUAL
-                       </button>
+        <div id="viewBitacoraForm" class="view active">
+           <!-- TACTICAL HERO BANNER -->
+           <div class="dash-hero" style="min-height: 280px;">
+               <div class="dash-hero-scanline"></div>
+               <div class="dash-hero-inner">
+                   <div class="dash-hero-content">
+                       <div class="dash-corp-tag"><i class="fas fa-book"></i> BITÁCORA OPERATIVA</div>
+                       <h1>Bitácora <span class="accent">Virtual</span></h1>
+                       <p>Registro cronológico de novedades, acuerdos y supervisión técnica. Mantenga un control detallado de las operaciones diarias.</p>
+                       <div class="dash-hero-actions">
+                           <button class="btn-gold btn-lg" onclick="document.getElementById('bit-classification').focus()"><i class="fas fa-plus"></i> Nuevo Registro</button>
+                       </div>
+                   </div>
+                   <div class="dash-hero-stats">
+                       <div class="hs-card">
+                           <div class="hs-num" id="bit-stat-total">0</div>
+                           <div class="hs-label">Registros Totales</div>
+                       </div>
+                       <div class="hs-card hs-aceptable">
+                           <div class="hs-num" id="bit-stat-today">0</div>
+                           <div class="hs-label">Hoy</div>
+                       </div>
                    </div>
                </div>
-           </section>
+           </div>
+
+           <div class="bitacora-layout">
+
+               <!-- Form Panel -->
+               <aside class="bitacora-card bitacora-form-panel">
+                   <h2 class="bitacora-section-title">Registro de Actividad</h2>
+                   <form id="bitacora-form" onsubmit="window.saveBitacoraEntry(event)">
+                       <div class="form-group">
+                           <label class="bitacora-label"><i class="fas fa-calendar-day"></i> FECHA</label>
+                           <input type="date" id="bit-date" class="bitacora-input" required>
+                       </div>
+                       
+                       <div class="form-group">
+                           <label class="bitacora-label"><i class="fas fa-tags"></i> CLASIFICACIÓN</label>
+                           <select id="bit-classification" class="bitacora-select" required>
+                               <option value="" disabled selected>Seleccione Clasificación</option>
+                               <option value="NOVEDADES RECIENTES">NOVEDADES RECIENTES</option>
+                               <option value="DETALLE DE SUPERVISIÓN EJECUTIVA">DETALLE DE SUPERVISIÓN EJECUTIVA</option>
+                               <option value="ACUERDOS RECIENTES">ACUERDOS RECIENTES</option>
+                               <option value="Actualización de riesgos">Actualización de riesgos</option>
+                               <option value="SUGERENCIAS DE SEGURIDAD">SUGERENCIAS DE SEGURIDAD</option>
+                               <option value="MEJORAS OPERATIVAS">MEJORAS OPERATIVAS</option>
+                               <option value="TEMAS PENDIENTES">TEMAS PENDIENTES</option>
+                               <option value="INVERSIONES PENDIENTES">INVERSIONES PENDIENTES</option>
+                               <option value="NOTAS">NOTAS</option>
+                           </select>
+                       </div>
+
+                       <div class="form-group">
+                           <label class="bitacora-label" style="display:flex; justify-content:space-between; align-items:center;">
+                               <span><i class="fas fa-align-left"></i> DESCRIPCIÓN DETALLADA</span>
+                               <button type="button" class="btn-chat-mic" id="bit-mic" onclick="window.toggleBitacoraVoice()" style="width:24px; height:24px; font-size:10px;">
+                                   <i class="fas fa-microphone"></i>
+                               </button>
+                           </label>
+                           <textarea id="bit-description" class="bitacora-textarea" placeholder="Describa la novedad o acuerdo..." required></textarea>
+                       </div>
+
+                        <div class="form-group">
+                            <label class="bitacora-label"><i class="fas fa-camera"></i> EVIDENCIA FOTOGRÁFICA</label>
+                            <input type="file" id="bit-photos" class="bitacora-input" accept="image/*" multiple onchange="window.previewBitacoraPhotos(this)">
+                            <div id="bit-photos-preview" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;"></div>
+                        </div>
+
+                        <button type="submit" class="btn-bitacora-save">
+                            <i class="fas fa-save"></i> GUARDAR EN BITÁCORA
+                        </button>
+                        
+                    </form>
+                </aside>
+
+                <!-- History Panel -->
+                <section class="bitacora-card bitacora-history-panel">
+                    <div class="bitacora-history-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                        <h2 class="bitacora-section-title" style="margin-bottom:0">REGISTROS DEL DÍA</h2>
+                        <div style="display:flex; gap:12px; align-items:center">
+                            <div id="bit-history-date-display" style="font-size:11px; font-weight:800; color:var(--text-m); text-transform:uppercase;"></div>
+                            <button class="btn-report-monthly" onclick="window.k9_openBitacoraReportConfig()" style="background: var(--critico); border-color: var(--critico);">
+                                <i class="fas fa-file-pdf"></i> EXPORTAR REPORTE
+                            </button>
+                        </div>
+                    </div>
+
+                   <div id="bitacora-list" style="display:flex; flex-direction:column; gap:12px; overflow-y:auto; flex:1;">
+                       <!-- Dynamic items -->
+                   </div>
+               </section>
+           </div>
         </div>
       </div>
+
+      <!-- MODAL: CONFIGURACIÓN DE REPORTE BITÁCORA -->
+      <div id="modalReportConfig" class="modal-overlay" onclick="window.closeReportConfig()">
+          <div class="modal-box config-modal" onclick="event.stopPropagation()">
+              <div class="modal-header tactical">
+                  <h3><i class="fas fa-file-invoice"></i> Configuración de Reporte PDF</h3>
+                  <button class="modal-close" onclick="window.closeReportConfig()"><i class="fas fa-times"></i></button>
+              </div>
+              <div class="modal-body">
+                  <div class="form-group">
+                      <label class="bitacora-label">Nombre del Cliente / Entidad</label>
+                      <input type="text" id="cfg-client-name" class="bitacora-input" placeholder="Ej: Corporación K-9 Planta 1">
+                  </div>
+                  <div class="form-grid-2">
+                      <div class="form-group">
+                          <label class="bitacora-label">Nivel de Alerta</label>
+                          <select id="cfg-alert-level" class="bitacora-select">
+                              <option value="Bajo">Bajo</option>
+                              <option value="Medio" selected>Medio</option>
+                              <option value="Alto">Alto</option>
+                              <option value="Crítico">Crítico</option>
+                          </select>
+                      </div>
+                      <div class="form-group">
+                          <label class="bitacora-label">Ejecutivo(s) K-9</label>
+                          <input type="text" id="cfg-executive" class="bitacora-input" placeholder="Nombre del responsable">
+                      </div>
+                  </div>
+                  <div class="form-group">
+                      <label class="bitacora-label">Contacto del Cliente</label>
+                      <input type="text" id="cfg-client-contact" class="bitacora-input" placeholder="Nombre del enlace">
+                  </div>
+
+                  <!-- SECCIÓN DE FIRMA -->
+                  <div class="form-group" style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 8px; border: 1px solid var(--gold-pale);">
+                      <label class="bitacora-label" style="color: var(--gold);"><i class="fas fa-pen-nib"></i> FIRMA DEL EVALUADOR</label>
+                      <div style="display: flex; gap: 15px; align-items: center; margin-top: 10px;">
+                          <div id="bit-sig-preview" style="width: 120px; height: 60px; border: 1px dashed var(--gold); border-radius: 4px; display: flex; align-items: center; justify-content: center; background: #fff; overflow: hidden;">
+                              <i class="fas fa-image" style="color: #ccc;"></i>
+                          </div>
+                          <div style="flex: 1;">
+                              <button type="button" class="btn-gold" style="padding: 6px 12px; font-size: 11px;" onclick="document.getElementById('bit-sig-input').click()">
+                                  <i class="fas fa-upload"></i> CARGAR FIRMA
+                              </button>
+                              <input type="file" id="bit-sig-input" style="display: none;" accept="image/*" onchange="window.uploadBitacoraSignature(this)">
+                              <p style="font-size: 9px; color: var(--text-d); margin-top: 5px;">Se recomienda fondo blanco o transparente.</p>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+              <div class="modal-footer">
+                  <button class="btn-ghost" onclick="window.closeReportConfig()">Cancelar</button>
+                  <button class="btn-report-gen" onclick="window.generateBitacoraPDF()">
+                      <i class="fas fa-file-pdf"></i> GUARDAR Y GENERAR PDF
+                  </button>
+              </div>
+          </div>
+      </div>
+
 
     </div> <!-- end module-container -->
 
@@ -172,12 +329,51 @@
 <!-- ══════════════════════════════════════════
      VIEW: EVALUATION WIZARD
 ══════════════════════════════════════════ -->
-<div id="viewEvaluation" class="view" style="display:none">
+<div id="viewEvaluation" class="module-view" style="display:none; flex-direction:column;">
+  <!-- TACTICAL HERO BANNER (FULL WIDTH PRIMARY) -->
+  <div class="dash-hero eval-hero-progress" style="min-height: 220px; border-radius: 0; border: none; border-bottom: 2px solid var(--gold);">
+      <div class="dash-hero-scanline"></div>
+      <div class="dash-hero-inner" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 40px; padding: 40px 60px;">
+          <div class="dash-hero-content">
+              <div class="dash-corp-tag"><i class="fas fa-shield-halved"></i> AUDITORÍA PATRIMONIAL EN PROCESO</div>
+              <h1 id="eval-hero-site-name" style="font-size:36px; margin-top:10px; margin-bottom:5px;">Cargando...</h1>
+              <div id="eval-hero-subtitle" style="font-size:12px; color:rgba(255,255,255,0.6); font-weight:700; letter-spacing:1px;">OPERATIVO ACTIVO</div>
+              
+              <!-- TACTICAL ACTIONS -->
+              <div class="dash-hero-actions" style="margin-top: 30px; display: flex; gap: 10px; align-items: center;">
+                  <button class="btn-ghost-sm" id="btnBackDash" onclick="confirmBackDashboard()" style="border-color: rgba(255,255,255,0.2); padding: 10px 15px;">
+                      <i class="fas fa-arrow-left"></i> DASHBOARD
+                  </button>
+                  <button class="btn-tactical-save" onclick="saveEvaluation(false)">
+                      <i class="fas fa-floppy-disk"></i> GUARDAR BORRADOR
+                  </button>
+                  <button class="btn-tactical-finish" onclick="saveEvaluation(true)">
+                      <i class="fas fa-check-double"></i> FINALIZAR
+                  </button>
+                  <button class="btn-tactical-pdf" onclick="downloadPDF()">
+                      <i class="fas fa-file-pdf"></i> PDF
+                  </button>
+              </div>
+          </div>
+          
+          <div class="dash-hero-stats" style="display: flex; flex-direction: row; gap: 20px;">
+              <div class="hs-card" style="min-width:160px; padding: 25px; background: rgba(13,23,47,0.4); border: 1px solid rgba(255,255,255,0.1);">
+                  <div class="hs-num" id="eval-hero-section-num" style="font-size: 32px; color: #fff;">1</div>
+                  <div class="hs-label" style="font-size: 10px; opacity: 0.6;">Sección Actual</div>
+              </div>
+              <div class="hs-card hs-aceptable" id="eval-hero-score-card" style="min-width:160px; padding: 25px; border: 1px solid var(--gold);">
+                  <div class="hs-num" id="eval-hero-total-pct" style="font-size: 32px;">0%</div>
+                  <div class="hs-label" style="font-size: 10px;">Cumplimiento</div>
+              </div>
+          </div>
+      </div>
+  </div>
+
   <div class="eval-layout">
 
     <!-- SIDEBAR -->
     <aside class="eval-sidebar">
-      <div class="sidebar-header">
+      <div class="sidebar-header" style="display:none;">
         <div class="sb-score-ring" id="sbScoreRing">
           <svg viewBox="0 0 80 80" class="ring-svg">
             <circle cx="40" cy="40" r="34" class="ring-track"/>
@@ -190,25 +386,24 @@
         </div>
         <div class="sb-section-count"><span id="sbCompleted">0</span>/17 secciones</div>
       </div>
-      <nav class="sidebar-nav" id="sidebarNav"><!-- rendered by JS --></nav>
-      <div class="sidebar-actions">
-        <button class="btn-save-draft" onclick="saveEvaluation(false)"><i class="fas fa-floppy-disk"></i> Guardar Borrador</button>
-        <button class="btn-finalize" onclick="saveEvaluation(true)"><i class="fas fa-check-circle"></i> Finalizar Evaluación</button>
-        <button class="btn-save-draft" onclick="downloadPDF()" style="margin-top:4px;color:var(--gold);border-color:var(--gold)"><i class="fas fa-file-pdf"></i> Descargar PDF</button>
-      </div>
+      <nav class="sidebar-nav" id="sidebarNav" style="margin-top:20px;"><!-- rendered by JS --></nav>
+      <div class="sidebar-actions" style="display:none;"></div>
     </aside>
 
     <!-- MAIN CONTENT -->
     <main class="eval-main">
-      <div class="eval-section-header" id="evalSectionHeader">
-        <div class="esh-num" id="eshNum">I</div>
-        <div class="esh-info">
-          <h2 id="eshTitle">Datos Generales</h2>
-          <p id="eshDesc">Información general del sitio evaluado</p>
+      <!-- Standardized Section Title Bar -->
+      <div style="background:var(--navy-d); color:#fff; padding:15px 25px; border-radius:10px 10px 0 0; display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--gold);">
+        <div style="display:flex; align-items:center; gap:15px;">
+            <div id="eshNum" style="background:var(--gold); color:var(--navy); width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; font-family:var(--fh);">I</div>
+            <div>
+                <h2 id="eshTitle" style="font-size:16px; margin:0; text-transform:uppercase; font-family:var(--fh); letter-spacing:0.05em;">Datos Generales</h2>
+                <p id="eshDesc" style="font-size:11px; margin:0; color:rgba(255,255,255,0.6);">Información general del sitio evaluado</p>
+            </div>
         </div>
-        <div class="esh-score" id="eshScore" style="display:none">
-          <div class="esh-score-val" id="eshScoreVal">–</div>
-          <div class="esh-score-label">Esta sección</div>
+        <div id="eshScore" style="text-align:right; display:none;">
+            <div id="eshScoreVal" style="font-size:18px; font-weight:900; color:var(--gold);">0%</div>
+            <div style="font-size:9px; color:rgba(255,255,255,0.5);">SECCIÓN</div>
         </div>
       </div>
 
@@ -242,13 +437,43 @@
 
 <!-- TOAST -->
 <div id="toast" class="toast"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.6.0/jspdf.plugin.autotable.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 <script src="storage.js"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>
+<script src="clientes.js"></script>
 <script src="bitacora.js"></script>
 <script src="minutas.js"></script>
+<script src="incidentes.js"></script>
+<script src="assistant.js"></script>
 <script src="photos.js"></script>
+
+<!-- K-9 TACTICAL ASSISTANT -->
+<div class="k9-assistant-toggle" id="assistantToggle" onclick="toggleAssistant()">
+  <i class="fas fa-tower-observation"></i>
+</div>
+
+<div class="k9-chat-window" id="assistantWindow">
+  <div class="k9-chat-header">
+    <h3><span class="status-dot"></span> OPERADOR CENTRAL K-9</h3>
+    <button class="btn-icon" onclick="toggleAssistant()"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="k9-chat-body" id="assistantChatBody">
+    <div class="chat-msg msg-bot">
+      Centro de mando en línea. ¿En qué puedo asistirle, agente?
+    </div>
+  </div>
+  <div class="k9-chat-footer">
+    <input type="text" class="chat-input" id="assistantInput" placeholder="Escriba un comando o dictado..." 
+           onkeypress="if(event.key==='Enter') sendAssistantMessage()">
+    <button class="btn-chat-mic" id="assistantMic" onclick="toggleVoiceRecognition()">
+      <i class="fas fa-microphone"></i>
+    </button>
+  </div>
+</div>
+
 </body>
 </html>
