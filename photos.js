@@ -12,20 +12,20 @@ function ensurePhotos(key) {
 
 function renderPhotoZone(sectionKey) {
   ensurePhotos(sectionKey);
-  const photos = currentEval.photos[sectionKey] || [];
-  const thumbs = photos.map((p, i) => `
-    <div class="photo-thumb">
-      <img src="${p.data}" alt="foto ${i+1}"/>
-      <button class="photo-thumb-del" onclick="removePhoto('${sectionKey}',${i})" title="Eliminar"><i class="fas fa-times"></i></button>
-    </div>
-    <input class="photo-caption-input" id="cap_${sectionKey}_${i}" value="${p.caption||''}" placeholder="Pie de foto..." onchange="updateCaption('${sectionKey}',${i},this.value)"/>`).join('');
+  
+  // Schedule asynchronous loading of photos from IndexedDB after the element is in the DOM
+  setTimeout(() => {
+    if (typeof refreshPhotoGrid === 'function') {
+      refreshPhotoGrid(sectionKey);
+    }
+  }, 50);
+  
   return `
     <div class="photo-zone">
       <div class="photo-zone-title"><i class="fas fa-camera"></i>Fotografías de Evidencia</div>
       <div class="photo-grid" id="pg_${sectionKey}">
-        ${thumbs}
-        <div class="photo-add-btn" onclick="triggerPhotoUpload('${sectionKey}')">
-          <i class="fas fa-plus-circle"></i><span>Agregar<br>Foto</span>
+        <div style="padding:20px;text-align:center;color:#888;font-size:12px;width:100%;">
+          <i class="fas fa-spinner fa-spin" style="margin-right:8px;"></i> Cargando fotografías...
         </div>
       </div>
       <input type="file" id="fi_${sectionKey}" accept="image/*" multiple style="display:none"
