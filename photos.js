@@ -802,28 +802,32 @@ async function downloadPDF(id) {
     } else if (sec.key === 's18') {
       const riesgos = ev.s18?.riesgos || [];
       
-      // Grid Visual logic for PDF
-      let gridRows = '';
-      for (let y = 5; y >= 1; y--) {
-        let cells = '';
-        for (let x = 1; x <= 5; x++) {
-          const score = x * y;
-          const bg = score <= 4 ? '#2ECC71' : score <= 9 ? '#F1C40F' : score <= 15 ? '#E67E22' : '#E74C3C';
-          const count = riesgos.filter(r => r.probabilidad == x && r.impacto == y).length;
-          cells += `<td style="width:40px;height:40px;background:${bg};border:1px solid #fff;text-align:center;font-size:10px;font-weight:700;color:rgba(255,255,255,0.8);position:relative">
-            ${count > 0 ? `<div style="color:#000;background:#fff;border-radius:50%;width:18px;height:18px;line-height:18px;margin:0 auto;box-shadow:0 1px 3px rgba(0,0,0,0.2)">${count}</div>` : score}
-          </td>`;
+      // Comparative Bar Chart logic for PDF
+      const labels = riesgos.map(r => r.amenaza.length > 20 ? r.amenaza.substring(0, 20) + '...' : r.amenaza);
+      const dataInherente = riesgos.map(r => r.inherente || r.probabilidad || 1);
+      const dataResidual = riesgos.map(r => r.residual || r.impacto || 1);
+
+      const chartConfig = {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'Inherente', data: dataInherente, backgroundColor: '#E74C3C' },
+            { label: 'Residual', data: dataResidual, backgroundColor: '#2ECC71' }
+          ]
+        },
+        options: {
+          scales: { yAxes: [{ ticks: { min: 0, max: 5, stepSize: 1 } }] },
+          legend: { position: 'bottom' },
+          title: { display: true, text: 'Riesgo Inherente vs Residual' }
         }
-        gridRows += `<tr><td style="width:20px;font-size:10px;font-weight:700;text-align:right;padding-right:5px;color:#666">${y}</td>${cells}</tr>`;
-      }
+      };
+      
+      const chartUrl = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(chartConfig))}&w=500&h=250`;
 
       const visualMatrix = `
-        <div style="margin:20px auto;width:250px;text-align:center">
-          <table style="border-collapse:collapse;margin:0 auto">
-            ${gridRows}
-            <tr><td></td><td style="font-size:10px;font-weight:700;color:#666;height:20px">1</td><td style="font-size:10px;font-weight:700;color:#666">2</td><td style="font-size:10px;font-weight:700;color:#666">3</td><td style="font-size:10px;font-weight:700;color:#666">4</td><td style="font-size:10px;font-weight:700;color:#666">5</td></tr>
-          </table>
-          <div style="font-size:9px;color:#888;margin-top:5px;font-weight:700;text-transform:uppercase">← Probabilidad →</div>
+        <div style="margin:20px auto;text-align:center">
+          <img src="${chartUrl}" style="max-width:100%;height:auto;border-radius:8px;">
         </div>
       `;
 
@@ -831,39 +835,48 @@ async function downloadPDF(id) {
         <table style="width:100%;border-collapse:collapse;border:1px solid #e0e3ee;font-size:11px">
           <thead><tr style="background:#0D172F;color:#fff">
             <th style="padding:8px;text-align:left">Amenaza / Riesgo</th>
-            <th style="padding:8px;text-align:center;width:60px">Prob.</th>
-            <th style="padding:8px;text-align:center;width:60px">Imp.</th>
-            <th style="padding:8px;text-align:center;width:80px">Nivel</th>
+            <th style="padding:8px;text-align:center;width:60px">R. Inh.</th>
+            <th style="padding:8px;text-align:center;width:60px">R. Res.</th>
+            <th style="padding:8px;text-align:center;width:60px">R. Obj.</th>
+            <th style="padding:8px;text-align:center;width:80px">Nivel (Res)</th>
           </tr></thead>
           <tbody>
             ${riesgos.length ? riesgos.map((r,i) => {
-              const score = r.probabilidad * r.impacto;
-              const lvl = score <= 4 ? 'Bajo' : score <= 9 ? 'Medio' : score <= 15 ? 'Alto' : 'Muy Alto';
-              const color = score <= 4 ? '#2ECC71' : score <= 9 ? '#F1C40F' : score <= 15 ? '#E67E22' : '#E74C3C';
+              r.inherente = r.inherente || r.probabilidad || 1;
+              r.residual = r.residual || r.impacto || 1;
+              r.objetivo = r.objetivo || 1;
+              const lvl = r.residual <= 2 ? 'Bajo' : r.residual == 3 ? 'Medio' : 'Alto';
+              const color = r.residual <= 2 ? '#2ECC71' : r.residual == 3 ? '#F1C40F' : '#E74C3C';
               return `<tr style="background:${i%2?'#f9fafd':'#fff'}">
-                <td style="padding:7px 10px;font-weight:600">${r.amenaza}</td>
-                <td style="padding:7px 10px;text-align:center">${r.probabilidad}</td>
-                <td style="padding:7px 10px;text-align:center">${r.impacto}</td>
-                <td style="padding:7px 10px;text-align:center"><span style="color:#fff;background:${color};padding:2px 6px;border-radius:4px;font-weight:700;font-size:9px">${lvl.toUpperCase()}</span></td>
+                <td style="padding:7px 10px;font-weight:600;border-bottom:none;">${r.amenaza}</td>
+                <td style="padding:7px 10px;text-align:center;border-bottom:none;">${r.inherente}</td>
+                <td style="padding:7px 10px;text-align:center;border-bottom:none;">${r.residual}</td>
+                <td style="padding:7px 10px;text-align:center;border-bottom:none;">${r.objetivo}</td>
+                <td style="padding:7px 10px;text-align:center;border-bottom:none;"><span style="color:#fff;background:${color};padding:2px 6px;border-radius:4px;font-weight:700;font-size:9px">${lvl.toUpperCase()}</span></td>
+              </tr>
+              <tr style="background:${i%2?'#f9fafd':'#fff'}">
+                <td colspan="5" style="padding:0 10px 7px 10px;font-size:10px;color:#555;border-bottom:1px solid #e0e3ee;">
+                  <strong>Medidas de mitigación:</strong> ${r.medidas || '<em>No especificadas</em>'}
+                </td>
               </tr>`;
-            }).join('') : '<tr><td colspan="4" style="padding:15px;text-align:center;color:#888">No se registraron amenazas específicas en la matriz.</td></tr>'}
+            }).join('') : '<tr><td colspan="5" style="padding:15px;text-align:center;color:#888">No se registraron amenazas específicas en la matriz.</td></tr>'}
           </tbody>
         </table>
       `;
 
       content = `
-        <div style="display:grid;grid-template-columns:250px 1fr;gap:20px;align-items:center">
-          <div>${visualMatrix}</div>
-          <div>
-            <div style="font-size:11px;font-weight:700;color:#0D172F;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;border-bottom:1px solid #0D172F;padding-bottom:4px">Análisis Cuantitativo</div>
-            ${analysisTable}
-          </div>
+        <div style="margin-bottom: 20px;">
+          <div style="font-size:11px;font-weight:700;color:#0D172F;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;border-bottom:1px solid #0D172F;padding-bottom:4px">Análisis Cuantitativo</div>
+          ${analysisTable}
+        </div>
+        <div>
+          ${visualMatrix}
+        </div>
         </div>
         <div style="margin-top:15px;display:flex;gap:15px;justify-content:center;font-size:9px;font-weight:700">
-           <span style="color:#2ECC71">■ BAJO (1-4)</span>
-           <span style="color:#F1C40F">■ MEDIO (5-9)</span>
-           <span style="color:#E67E22">■ ALTO (10-15)</span>
-           <span style="color:#E74C3C">■ MUY ALTO (16-25)</span>
+           <span style="color:#2ECC71">■ BAJO (1-2)</span>
+           <span style="color:#F1C40F">■ MEDIO (3)</span>
+           <span style="color:#E74C3C">■ ALTO/EXTREMO (4-5)</span>
         </div>
       `;
 

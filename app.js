@@ -1684,10 +1684,11 @@ function syncRisksFromS6() {
       currentEval.s18.riesgos.push({
         id: 'auto_' + rid,
         amenaza: manifest.label,
-        probabilidad: 1,
-        impacto: 1,
+        inherente: 1,
+        residual: 1,
+        objetivo: 1,
+        medidas: '',
         nivel: 'bajo',
-        score: 1,
         origin: 's6'
       });
     }
@@ -1701,81 +1702,49 @@ function renderMatriz() {
 
   return `
     <div class="info-callout"><i class="fas fa-circle-info"></i>
-      <p>Cuantifique las amenazas identificadas asignando valores de 1 a 5 para Probabilidad e Impacto. La matriz se actualizará automáticamente.</p></div>
+      <p>Califique cada amenaza identificada asignando valores de 1 a 5 para el Riesgo Inherente, Residual y Objetivo.</p></div>
 
-    <div class="risk-matrix-layout">
-      <!-- Tabla de Riesgos -->
-      <div class="rm-table-card">
-        <div class="sc-title" style="margin-bottom:15px"><i class="fas fa-list-ol"></i>Análisis de Amenazas</div>
-        <table class="rm-table">
-          <thead>
-            <tr>
-              <th>Amenaza / Riesgo</th>
-              <th style="text-align:center;width:80px">Prob.</th>
-              <th style="text-align:center;width:80px">Imp.</th>
-              <th style="text-align:center;width:100px">Nivel</th>
-              <th style="width:40px"></th>
-            </tr>
-          </thead>
-          <tbody id="riskRows">
-            ${renderRiskRows(riesgos)}
-          </tbody>
-        </table>
-        <button class="btn-ghost-sm" style="margin-top:15px;width:100%" onclick="addCustomRisk()">
-          <i class="fas fa-plus"></i> Agregar Amenaza Personalizada
-        </button>
-      </div>
-
-      <!-- Matriz Visual -->
-      <div class="rm-visual-card">
-        <div class="sc-title" style="margin-bottom:20px;text-align:center">Nivel de Riesgo (5x5)</div>
-        <div class="rm-grid-wrapper">
-          <div class="rm-grid-header-x"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
-          <div class="rm-grid-main">
-            <div class="rm-grid-label-y"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
-            <div class="risk-matrix-grid" id="matrixGrid">
-              ${renderMatrixGrid(riesgos)}
-            </div>
-          </div>
-          <div style="margin-top:5px;font-size:10px;color:var(--text-d);font-weight:700">PROBABILIDAD →</div>
-          <div style="position:absolute;left:15px;top:50%;transform:translateY(-50%) rotate(-90deg);font-size:10px;color:var(--text-d);font-weight:700">IMPACTO →</div>
-        </div>
-
-        <div class="rm-legend">
-          <div class="rm-leg-item"><div class="rm-leg-box" style="background:#2ECC71"></div> Bajo (1-4)</div>
-          <div class="rm-leg-item"><div class="rm-leg-box" style="background:#F1C40F"></div> Medio (5-9)</div>
-          <div class="rm-leg-item"><div class="rm-leg-box" style="background:#E67E22"></div> Alto (10-15)</div>
-          <div class="rm-leg-item"><div class="rm-leg-box" style="background:#E74C3C"></div> Muy Alto (16-25)</div>
-        </div>
-      </div>
+    <div class="section-card">
+      <div class="sc-title" style="margin-bottom:15px"><i class="fas fa-list-ol"></i> Análisis de Amenazas y Calificación de Riesgos</div>
+      <table class="rm-table" style="width:100%;">
+        <thead>
+          <tr>
+            <th style="text-align:left;">Amenaza / Riesgo</th>
+            <th style="text-align:center;width:90px" title="Riesgo antes de controles">R. Inherente</th>
+            <th style="text-align:center;width:90px" title="Riesgo después de controles">R. Residual</th>
+            <th style="text-align:center;width:90px" title="Riesgo meta">R. Objetivo</th>
+            <th style="text-align:center;width:100px">Nivel (Residual)</th>
+            <th style="width:40px"></th>
+          </tr>
+        </thead>
+        <tbody id="riskRows">
+          ${renderRiskRows(riesgos)}
+        </tbody>
+      </table>
+      <button class="btn-ghost-sm" style="margin-top:15px;width:100%" onclick="addCustomRisk()">
+        <i class="fas fa-plus"></i> Agregar Amenaza Personalizada
+      </button>
     </div>
 
     <div class="section-card" style="margin-top:20px">
-      <div class="sc-title"><i class="fas fa-calculator"></i>Criterios de Evaluación y Cuantificación (1-5)</div>
+      <div class="sc-title"><i class="fas fa-calculator"></i> Criterios de Evaluación y Cuantificación (Escala 1-5)</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
         <div>
-          <h4 style="font-size:12px;color:var(--navy);margin-bottom:8px">Escala de Probabilidad</h4>
-          <table class="criteria-table" style="font-size:10px">
-            <thead style="font-size:9px"><tr><th>Valor</th><th>Criterio</th><th>Descripción</th></tr></thead>
-            <tbody>
-              <tr><td><strong>1</strong></td><td>Muy Baja</td><td>Evento extremadamente raro / Casi improbable.</td></tr>
-              <tr><td><strong>2</strong></td><td>Baja</td><td>Poco frecuente / Puede ocurrir ocasionalmente.</td></tr>
-              <tr><td><strong>3</strong></td><td>Media</td><td>Evento posible / Podría ocurrir en circunstancias normales.</td></tr>
-              <tr><td><strong>4</strong></td><td>Alta</td><td>Probable / Es muy posible que ocurra con frecuencia.</td></tr>
-              <tr><td><strong>5</strong></td><td>Muy Alta</td><td>Casi certeza / Se espera que ocurra habitualmente.</td></tr>
-            </tbody>
-          </table>
+          <h4 style="font-size:12px;color:var(--navy);margin-bottom:8px">Definición de Riesgos</h4>
+          <ul style="font-size:11px;color:#333;line-height:1.6;padding-left:20px;margin-bottom:0">
+            <li><strong>Riesgo Inherente:</strong> El nivel de riesgo existente antes de aplicar cualquier medida de control o mitigación.</li>
+            <li><strong>Riesgo Residual:</strong> El nivel de riesgo que permanece después de haber implementado controles y acciones correctivas.</li>
+            <li><strong>Riesgo Objetivo:</strong> El nivel de riesgo que la organización está dispuesta a aceptar o tolerar (Apetito de Riesgo).</li>
+          </ul>
         </div>
         <div>
-          <h4 style="font-size:12px;color:var(--navy);margin-bottom:8px">Escala de Impacto</h4>
+          <h4 style="font-size:12px;color:var(--navy);margin-bottom:8px">Escala de Calificación</h4>
           <table class="criteria-table" style="font-size:10px">
-            <thead style="font-size:9px"><tr><th>Valor</th><th>Criterio</th><th>Descripción</th></tr></thead>
+            <thead style="font-size:9px"><tr><th>Valor</th><th>Nivel de Riesgo</th><th>Descripción General</th></tr></thead>
             <tbody>
-              <tr><td><strong>1</strong></td><td>Insignificante</td><td>Sin impacto notable en personas o activos.</td></tr>
-              <tr><td><strong>2</strong></td><td>Menor</td><td>Impacto leve o daños materiales mínimos.</td></tr>
-              <tr><td><strong>3</strong></td><td>Moderado</td><td>Daño parcial o afectación relevante.</td></tr>
-              <tr><td><strong>4</strong></td><td>Mayor</td><td>Daño grave / Impacto significativo económico/legal.</td></tr>
-              <tr><td><strong>5</strong></td><td>Catastrófico</td><td>Pérdida total / Impacto crítico o irreparable.</td></tr>
+              <tr><td><strong>1-2</strong></td><td><span style="color:#2ECC71;font-weight:bold">Bajo</span></td><td>Riesgo aceptable; solo requiere monitoreo rutinario.</td></tr>
+              <tr><td><strong>3</strong></td><td><span style="color:#F1C40F;font-weight:bold">Medio</span></td><td>Requiere atención y controles para evitar su materialización.</td></tr>
+              <tr><td><strong>4-5</strong></td><td><span style="color:#E74C3C;font-weight:bold">Alto / Extremo</span></td><td>Inaceptable; requiere acción inmediata y controles robustos.</td></tr>
             </tbody>
           </table>
         </div>
@@ -1786,77 +1755,69 @@ function renderMatriz() {
 
 function renderRiskRows(riesgos) {
   return riesgos.map((r, i) => {
-    const score = r.probabilidad * r.impacto;
-    const lvl = getRiskLevel(score);
-    const color = lvl==='bajo'?'#2ECC71':lvl==='medio'?'#F1C40F':lvl==='alto'?'#E67E22':'#E74C3C';
+    r.inherente = r.inherente || r.probabilidad || 1;
+    r.residual = r.residual || r.impacto || 1;
+    r.objetivo = r.objetivo || 1;
+    const lvl = getRiskLevel(r.residual);
+    const color = lvl==='bajo'?'#2ECC71':lvl==='medio'?'#F1C40F':'#E74C3C';
     return `
       <tr id="rrow_${i}">
         <td><input type="text" class="form-input-inline" value="${r.amenaza}" oninput="updateRiskVal(${i},'amenaza',this.value)" style="width:100%;background:none;border:none;font-weight:600;color:var(--navy)"/></td>
         <td style="text-align:center">
-          <select class="rm-val-select" onchange="updateRiskVal(${i},'probabilidad',this.value)">
-            ${[1,2,3,4,5].map(v=>`<option value="${v}" ${r.probabilidad==v?'selected':''}>${v}</option>`).join('')}
+          <select class="rm-val-select" onchange="updateRiskVal(${i},'inherente',this.value)">
+            ${[1,2,3,4,5].map(v=>`<option value="${v}" ${r.inherente==v?'selected':''}>${v}</option>`).join('')}
           </select>
         </td>
         <td style="text-align:center">
-          <select class="rm-val-select" onchange="updateRiskVal(${i},'impacto',this.value)">
-            ${[1,2,3,4,5].map(v=>`<option value="${v}" ${r.impacto==v?'selected':''}>${v}</option>`).join('')}
+          <select class="rm-val-select" onchange="updateRiskVal(${i},'residual',this.value)">
+            ${[1,2,3,4,5].map(v=>`<option value="${v}" ${r.residual==v?'selected':''}>${v}</option>`).join('')}
           </select>
         </td>
         <td style="text-align:center">
-          <span class="rm-lvl-badge" style="background:${color}">${lvl} (${score})</span>
+          <select class="rm-val-select" onchange="updateRiskVal(${i},'objetivo',this.value)">
+            ${[1,2,3,4,5].map(v=>`<option value="${v}" ${r.objetivo==v?'selected':''}>${v}</option>`).join('')}
+          </select>
+        </td>
+        <td style="text-align:center">
+          <span class="rm-lvl-badge" style="background:${color}; width: 60px; display: inline-block;">${lvl.toUpperCase()}</span>
         </td>
         <td>
           <button class="btn-icon del" onclick="removeRisk(${i})"><i class="fas fa-trash"></i></button>
+        </td>
+      </tr>
+      <tr id="rrow_med_${i}" style="border-bottom: 1px solid #eee;">
+        <td colspan="6" style="padding-top:0; padding-bottom:10px;">
+          <input type="text" placeholder="Medidas de mitigación implementadas para reducir el riesgo..." value="${r.medidas || ''}" oninput="updateRiskVal(${i},'medidas',this.value)" style="width:100%;background:#f9fafd;border:1px solid #e0e3ee;border-radius:4px;padding:5px 8px;font-size:11px;color:var(--text);"/>
         </td>
       </tr>
     `;
   }).join('');
 }
 
-function renderMatrixGrid(riesgos) {
-  let html = '';
-  // Grid 5x5: Impacto Y (5 a 1), Probabilidad X (1 a 5)
-  for (let y = 5; y >= 1; y--) {
-    for (let x = 1; x <= 5; x++) {
-      const score = x * y;
-      const lvlClass = score <= 4 ? 'lvl-1' : score <= 9 ? 'lvl-2' : score <= 15 ? 'lvl-3' : 'lvl-4';
-      const count = riesgos.filter(r => r.probabilidad == x && r.impacto == y).length;
-      html += `<div class="rm-cell ${lvlClass} ${count>0?'has-risk':''}" title="P:${x} I:${y} = ${score}">${count>0?count:score}<span class="rm-marker"></span></div>`;
-    }
-  }
-  return html;
-}
-
 function getRiskLevel(score) {
-  if (score <= 4) return 'bajo';
-  if (score <= 9) return 'medio';
-  if (score <= 15) return 'alto';
-  return 'muy alto';
+  if (score <= 2) return 'bajo';
+  if (score == 3) return 'medio';
+  return 'alto';
 }
 
 function updateRiskVal(idx, key, val) {
   const r = currentEval.s18.riesgos[idx];
   if (!r) return;
-  r[key] = (key==='amenaza') ? val : parseInt(val);
-  r.score = r.probabilidad * r.impacto;
-  r.nivel = getRiskLevel(r.score);
-  
-  // Update Matrix Grid and the row UI via render call or selective update
-  const grid = document.getElementById('matrixGrid');
-  if (grid) grid.innerHTML = renderMatrixGrid(currentEval.s18.riesgos);
+  r[key] = (key==='amenaza' || key==='medidas') ? val : parseInt(val);
+  r.nivel = getRiskLevel(r.residual);
   
   const row = document.getElementById(`rrow_${idx}`);
   if (row && key !== 'amenaza') {
-    const color = r.nivel==='bajo'?'#2ECC71':r.nivel==='medio'?'#F1C40F':r.nivel==='alto'?'#E67E22':'#E74C3C';
+    const color = r.nivel==='bajo'?'#2ECC71':r.nivel==='medio'?'#F1C40F':'#E74C3C';
     row.querySelector('.rm-lvl-badge').style.background = color;
-    row.querySelector('.rm-lvl-badge').textContent = `${r.nivel} (${r.score})`;
+    row.querySelector('.rm-lvl-badge').textContent = `${r.nivel.toUpperCase()}`;
   }
   autoSave();
 }
 
 function addCustomRisk() {
   if (!currentEval.s18.riesgos) currentEval.s18.riesgos = [];
-  currentEval.s18.riesgos.push({ amenaza:'Nueva Amenaza', probabilidad:1, impacto:1, nivel:'bajo', score:1, origin:'manual' });
+  currentEval.s18.riesgos.push({ amenaza:'Nueva Amenaza', inherente:1, residual:1, objetivo:1, medidas:'', nivel:'bajo', origin:'manual' });
   document.getElementById('sectionContent').innerHTML = renderMatriz();
   autoSave();
 }

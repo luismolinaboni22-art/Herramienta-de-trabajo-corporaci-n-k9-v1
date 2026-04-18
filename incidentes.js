@@ -527,7 +527,7 @@
                 </div>
             </div>
 
-            <script>window.onload = function() { window.print(); setTimeout(() => { window.close(); }, 1000); }</script>
+            <script>window.onload = function() { setTimeout(() => { window.print(); }, 500); }</script>
         </body>
         </html>
         `;

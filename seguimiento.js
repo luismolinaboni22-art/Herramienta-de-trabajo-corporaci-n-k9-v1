@@ -351,7 +351,7 @@
                 </div>
             </div>
 
-            <script>window.onload = function() { window.print(); setTimeout(() => { window.close(); }, 1000); }<\/script>
+            <script>window.onload = function() { setTimeout(() => { window.print(); }, 500); }<\/script>
         </body>
         </html>
         `;
@@ -375,7 +375,7 @@
                 document.body.appendChild(iframe);
             }
             iframe.contentWindow.document.open();
-            iframe.contentWindow.document.write(html.replace('<script>window.onload = function() { window.print(); setTimeout(() => { window.close(); }, 1000); }</script>', ''));
+            iframe.contentWindow.document.write(html.replace('<script>window.onload = function() { setTimeout(() => { window.print(); }, 500); }<\/script>', ''));
             iframe.contentWindow.document.close();
             
             setTimeout(() => {

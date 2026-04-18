@@ -515,8 +515,7 @@
 
             <script>
                 window.onload = function() {
-                    window.print();
-                    setTimeout(() => window.close(), 1000);
+                    setTimeout(() => { window.print(); }, 500);
                 }
             </script>
         </body>
