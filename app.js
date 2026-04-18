@@ -145,15 +145,18 @@ function switchModule(moduleName) {
   } else if (moduleName === 'minutas') {
     toggleMainHeader(false);
     if (window.initMinutas) window.initMinutas();
-  } else if (moduleName === 'bitacora') {
-    toggleMainHeader(false);
-    if (window.initBitacora) window.initBitacora();
   } else if (moduleName === 'incidentes') {
     toggleMainHeader(false);
     if (window.initIncidentes) window.initIncidentes();
+  } else if (moduleName === 'seguimiento') {
+    toggleMainHeader(false);
+    if (window.initSeguimiento) window.initSeguimiento();
   } else if (moduleName === 'clientes') {
     toggleMainHeader(false);
     if (window.initClientes) window.initClientes();
+  } else if (moduleName === 'calendario') {
+    toggleMainHeader(false);
+    if (window.initCalendario) window.initCalendario();
   }
 }
 
@@ -163,8 +166,7 @@ function renderHomeDashboard() {
   if (!container) return;
 
   const clients = JSON.parse(localStorage.getItem('k9_clientes') || '[]');
-  const bitacora = JSON.parse(localStorage.getItem('k9_bitacora') || '[]');
-  
+
   // Risk Analysis Semaphore Logic
   const riskStatusList = clients.map(client => {
     const clientEvals = DB.filter(e => (e.s1.nombreSitio || '').toLowerCase().includes(client.nombre.toLowerCase()));
@@ -187,16 +189,6 @@ function renderHomeDashboard() {
     return { name: client.nombre, status, label, date: dateStr, expiry: expiryStr };
   });
 
-  // Bitacora Alerts Logic
-  const pendingAlerts = bitacora.filter(l => l.classification === 'TEMAS PENDIENTES' && l.dueDate).map(l => {
-    const due = new Date(l.dueDate);
-    const today = new Date();
-    const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
-    let alertLevel = 'info';
-    if (diffDays < 0) alertLevel = 'red';
-    else if (diffDays <= 7) alertLevel = 'yellow';
-    return { description: l.description, dueDate: due.toLocaleDateString(), level: alertLevel, daysLeft: diffDays };
-  }).sort((a,b) => a.daysLeft - b.daysLeft);
 
   container.innerHTML = `
     <div class="home-dash">
@@ -217,10 +209,7 @@ function renderHomeDashboard() {
               <div class="hero-stat-value">${DB.length}</div>
               <div class="hero-stat-label">Análisis</div>
             </div>
-            <div class="hero-stat">
-              <div class="hero-stat-value">${pendingAlerts.length}</div>
-              <div class="hero-stat-label">Alertas</div>
-            </div>
+
           </div>
         </div>
       </div>
@@ -245,25 +234,7 @@ function renderHomeDashboard() {
             `).join('')}
         </div>
 
-        <!-- ALERTS SECTION -->
-        <div class="home-section-card">
-          <div class="home-section-title">
-            <i class="fas fa-bell"></i> Alertas de Compromisos
-          </div>
-          ${pendingAlerts.length === 0
-            ? `<div class="empty-state"><i class="fas fa-check-circle"></i>No hay temas pendientes con fecha registrada.</div>`
-            : pendingAlerts.map(a => `
-              <div class="alert-card-item ${a.level}">
-                <div class="alert-icon-box ${a.level}">
-                  <i class="fas ${a.level === 'red' ? 'fa-triangle-exclamation' : 'fa-clock'}"></i>
-                </div>
-                <div>
-                  <div class="alert-card-desc">${a.description}</div>
-                  <div class="alert-card-meta">Vence el: ${a.dueDate} &nbsp;${a.daysLeft < 0 ? '<b style="color:var(--critico)">[VENCIDO]</b>' : '(' + a.daysLeft + ' días)'}</div>
-                </div>
-              </div>
-            `).join('')}
-        </div>
+
       </div>
     </div>
   `;
@@ -1272,7 +1243,10 @@ function renderScored(key, title) {
     const findings = Array.isArray(it.obs) ? it.obs : (it.obs ? [it.obs] : []);
     const findingsHtml = findings.map((f, fi) => `
       <div class="finding-item">
-        <textarea class="finding-text" placeholder="Describa el hallazgo... (ej. Cerca dañada)">${f}</textarea>
+        <div style="display:flex;gap:6px;align-items:flex-start;flex:1;">
+          <textarea class="finding-text" id="finding_${key}_${i}_${fi}" placeholder="Describa el hallazgo... (ej. Cerca dañada)">${f}</textarea>
+          <button class="btn-field-mic-ui" onclick="activateVoiceField('finding_${key}_${i}_${fi}')" title="Dictar por voz" style="flex-shrink:0;margin-top:2px;"><i class="fas fa-microphone"></i></button>
+        </div>
         <button class="btn-icon del" onclick="removeFinding(this)" title="Quitar hallazgo"><i class="fas fa-trash"></i></button>
       </div>`).join('');
 
@@ -1468,10 +1442,15 @@ function toggleItemObs(id) {
 function addFinding(key, idx) {
   const list = document.getElementById(`${key}_item${idx}_list`);
   if (!list) return;
+  const fi = Date.now();
+  const fieldId = `finding_${key}_${idx}_${fi}`;
   const div = document.createElement('div');
   div.className = 'finding-item';
   div.innerHTML = `
-    <textarea class="finding-text" placeholder="Describa el hallazgo..."></textarea>
+    <div style="display:flex;gap:6px;align-items:flex-start;flex:1;">
+      <textarea class="finding-text" id="${fieldId}" placeholder="Describa el hallazgo..."></textarea>
+      <button class="btn-field-mic-ui" onclick="activateVoiceField('${fieldId}')" title="Dictar por voz" style="flex-shrink:0;margin-top:2px;"><i class="fas fa-microphone"></i></button>
+    </div>
     <button class="btn-icon del" onclick="removeFinding(this)"><i class="fas fa-trash"></i></button>
   `;
   list.appendChild(div);

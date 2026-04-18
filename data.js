@@ -21,12 +21,14 @@ const SECTIONS = [
   { num:14, roman:'XIV',  key:'s13', icon:'fa-key',                 title:'Controles Electrónicos de Acceso (CECA)', desc:'Sistemas de tarjeta, biometría y barreras vehiculares',  type:'scored', weight:1 },
   { num:15, roman:'XV',   key:'s14', icon:'fa-file-shield',         title:'Procedimientos Administrativos',           desc:'Manuales, protocolos y capacitación del personal',       type:'scored', weight:1 },
   { num:16, roman:'XVI',  key:'s15', icon:'fa-lock',                title:'Zonas Críticas y Protección de Activos',  desc:'Áreas restringidas, activos de alto valor e inventarios', type:'scored', weight:1 },
-  { num:17, roman:'XVII', key:'s16', icon:'fa-chart-bar',           title:'Resultados y % de Cumplimiento',          desc:'Porcentaje final consolidado por categoría',             type:'resultados' },
-  { num:18, roman:'XVIII',key:'s18', icon:'fa-table-cells',         title:'Matriz de Evaluación de Riesgos',         desc:'Identificación, probabilidad e impacto de amenazas',     type:'matriz' },
-  { num:19, roman:'XIX',  key:'s17', icon:'fa-list-check',          title:'Plan de Acción y Conclusión',             desc:'Hallazgos, acciones correctivas y recomendaciones',      type:'plan' }
+  { num:17, roman:'XVII', key:'s20', icon:'fa-hard-hat',            title:'Salud Ocupacional y Seguridad', desc:'Interacción con tránsito vehicular, clima, caídas y riesgos físicos', type:'scored', weight:1 },
+  { num:18, roman:'XVIII', key:'s21', icon:'fa-graduation-cap',     title:'Capacitación y Formación', desc:'Servicio al cliente, uso de fuerza, primeros auxilios, DDHH, revisión de contenedores', type:'scored', weight:1 },
+  { num:19, roman:'XIX', key:'s16', icon:'fa-chart-bar',           title:'Resultados y % de Cumplimiento',          desc:'Porcentaje final consolidado por categoría',             type:'resultados' },
+  { num:20, roman:'XX',key:'s18', icon:'fa-table-cells',         title:'Matriz de Evaluación de Riesgos',         desc:'Identificación, probabilidad e impacto de amenazas',     type:'matriz' },
+  { num:21, roman:'XXI',  key:'s17', icon:'fa-list-check',          title:'Plan de Acción y Conclusión',             desc:'Hallazgos, acciones correctivas y recomendaciones',      type:'plan' }
 ];
 
-const SCORED_SECTIONS = ['s9','s10','s19a','s11','s12','s13','s14','s15'];
+const SCORED_SECTIONS = ['s9','s10','s19a','s11','s12','s13','s14','s15','s20','s21'];
 
 /* ── CHECKLISTS por sección ───────────────────────────────── */
 const CHECKLISTS = {
@@ -142,6 +144,29 @@ const CHECKLISTS = {
     'Existe un procedimiento documentado para reportar, asegurar y dar seguimiento ante la pérdida, robo o daño de un arma de fuego.',
     'Las armas están aseguradas o inaccesibles durante el almacenamiento para evitar acceso no autorizado o accidentes.',
     'Los oficiales conocen y aplican las normas legales costarricenses sobre uso progresivo de la fuerza y restricciones de portación.'
+  ],
+  s20: [
+    'El oficial cuenta con chaleco reflectivo y equipo luminoso adecuado para la interacción con tránsito vehicular.',
+    'Existen reductores de velocidad, señalización o barreras físicas que protegen al oficial del tránsito vehicular en los accesos.',
+    'El oficial cuenta con protección adecuada contra condiciones climáticas adversas (sol intenso, lluvia, viento).',
+    'El puesto de trabajo está libre de obstáculos que puedan provocar caídas, tropiezos o resbalones.',
+    'Existen protocolos y equipo de protección para evitar quemaduras o accidentes en áreas con riesgos térmicos o eléctricos.',
+    'El oficial tiene acceso a agua potable, áreas de descanso y facilidades sanitarias en buenas condiciones.',
+    'Se aplican medidas preventivas y se cuenta con equipo necesario para la exposición a polvo, ruido o agentes químicos si aplica.',
+    'El oficial realiza pausas activas o rotaciones para mitigar la fatiga y el estrés térmico o postural.',
+    'El puesto cuenta con condiciones ergonómicas adecuadas (silla ajustable, altura de escritorio, espacio libre para posturas prolongadas).'
+  ],
+  s21: [
+    'El oficial ha recibido capacitación formal en Servicio al Cliente y manejo de conflictos.',
+    'El oficial cuenta con entrenamiento documentado sobre el Uso Progresivo de la Fuerza.',
+    'El personal posee conocimientos básicos y capacitación vigente en Primeros Auxilios y RCP.',
+    'El oficial ha sido instruido en principios de Derechos Humanos aplicados a la seguridad privada.',
+    'Existe formación específica y documentada para la revisión de contenedores, furgones y vehículos de carga (si aplica).',
+    'El oficial conoce y aplica los protocolos de actuación ante emergencias (incendio, sismo, evacuación).',
+    'El personal de seguridad recibe charlas o refrescamientos periódicos sobre consignas y procedimientos del puesto.',
+    'Se mantienen registros y evidencias (diplomas, listas de asistencia) de todas las capacitaciones recibidas por el oficial.',
+    'El oficial cuenta con capacitación básica en técnicas de defensa personal y contención física.',
+    'Se ha brindado instrucción adecuada en la correcta elaboración, estructura y redacción de informes operativos y reportes de incidentes.'
   ]
 };
 

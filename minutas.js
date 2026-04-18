@@ -445,7 +445,7 @@
             <table class="header-table">
                 <tr>
                     <td style="width: 100px;"><img src="${K9_LOGO_SIG}" style="height: 50px; width: auto; display: block; margin: 0 auto;"></td>
-                    <td class="title-box">ACTA DE REUNIÓN / MINUTA TÁCTICA XIX<br>PATRIMONIAL SECURITY DIVISION</td>
+                    <td class="title-box">ACTA DE REUNIÓN / MINUTA</td>
                     <td class="meta-box">
                         COD: OPS-FOR-022<br>
                         FECHA: ${new Date().toLocaleDateString()}<br>

@@ -632,25 +632,31 @@ async function downloadPDF(id) {
       }).join('');
 
       // Radar chart — Perfil de Madurez Patrimonial
-      // Map our 7 scored sections into 6 radar axes (group some)
+      // Map our scored sections into radar axes (group some)
       const radarLabels = [
         'Físico (Perímetro)',
-        'Vigilancia y Control',
+        'Vigilancia y Armas',
         'Caseta de Seguridad',
         'Electrónico (CCTV)',
         'Procedimientos',
-        'Zonas Críticas'
+        'Zonas Críticas',
+        'Salud Ocupacional',
+        'Capacitación'
       ];
-      // s9=Perimetral(Físico), s10=Vigilancia, s11=Caseta, s12=Electrónico, s13+s14=Procedimientos(avg), s15=Zonas
+      // s9=Perimetral, s10+s19a=Vigilancia, s11=Caseta, s12=Electrónico, s13+s14=Procedimientos, s15=Zonas, s20=Salud Ocupacional, s21=Capacitación
+      const s10p = computeSectionScore('s10', ev) || 0;
+      const s19ap = computeSectionScore('s19a', ev) || 0;
       const s13p = computeSectionScore('s13', ev) || 0;
       const s14p = computeSectionScore('s14', ev) || 0;
       const radarData = [
         computeSectionScore('s9', ev) || 0,
-        computeSectionScore('s10', ev) || 0,
+        Math.round((s10p + s19ap) / 2),
         computeSectionScore('s11', ev) || 0,
         computeSectionScore('s12', ev) || 0,
         Math.round((s13p + s14p) / 2),
-        computeSectionScore('s15', ev) || 0
+        computeSectionScore('s15', ev) || 0,
+        computeSectionScore('s20', ev) || 0,
+        computeSectionScore('s21', ev) || 0
       ];
       const radarConfig = {
         type: 'radar',

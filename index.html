@@ -44,15 +44,21 @@
         <i class="fas fa-file-signature"></i>
         <span>Minutas de Reunión</span>
       </button>
-      
-      <button class="menu-item" onclick="switchModule('bitacora')" id="menu-bitacora">
-        <i class="fas fa-book"></i>
-        <span>Bitácora Virtual</span>
+
+      <button class="menu-item" onclick="switchModule('seguimiento')" id="menu-seguimiento">
+        <i class="fas fa-book-open"></i>
+        <span>Bitácora de Seguimiento</span>
       </button>
+      
 
       <button class="menu-item" onclick="switchModule('incidentes')" id="menu-incidentes">
         <i class="fas fa-file-shield"></i>
         <span>Informe de Incidentes</span>
+      </button>
+
+      <button class="menu-item" onclick="switchModule('calendario')" id="menu-calendario">
+        <i class="fas fa-calendar-days"></i>
+        <span>Calendario</span>
       </button>
     </nav>
     
@@ -159,6 +165,58 @@
         </div>
       </div>
 
+      <!-- MODULE: SEGUIMIENTO -->
+      <div id="moduleSeguimiento" class="module-view">
+        <div id="viewSeguimiento" class="view active">
+           <!-- Managed by seguimiento.js -->
+        </div>
+      </div>
+
+      <!-- MODAL: CONFIGURACIÓN DE REPORTE SEGUIMIENTO -->
+      <div id="modalSeguimientoConfig" class="modal-overlay" onclick="window.closeSeguimientoConfig()" style="display:none; align-items:center; justify-content:center; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:9999;">
+          <div class="modal-box config-modal" onclick="event.stopPropagation()" style="background:var(--card); width:480px; max-width:95vw; border-radius:12px; box-shadow:var(--shadow);">
+              <div class="modal-header tactical" style="background:var(--navy-d); padding:20px; border-bottom:2px solid var(--gold); border-radius:12px 12px 0 0; display:flex; justify-content:space-between; align-items:center;">
+                  <h3 style="color:#fff; font-family:'Outfit',sans-serif; margin:0; font-size:16px;"><i class="fas fa-file-invoice" style="color:var(--gold); margin-right:8px;"></i> Configuración de Reporte PDF</h3>
+                  <button class="modal-close" onclick="window.closeSeguimientoConfig()" style="background:none; border:none; color:#fff; font-size:20px; cursor:pointer;"><i class="fas fa-times"></i></button>
+              </div>
+              <div class="modal-body" style="padding:24px;">
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                      <div>
+                          <label style="display:block; font-size:11px; font-weight:800; color:var(--text-m); margin-bottom:6px;">Nivel de Alerta</label>
+                          <select id="seg-cfg-alert-level" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:6px; background:var(--bg); color:var(--text); font-family:'Inter', sans-serif;">
+                              <option value="Bajo">Bajo</option>
+                              <option value="Medio" selected>Medio</option>
+                              <option value="Alto">Alto</option>
+                              <option value="Crítico">Crítico</option>
+                          </select>
+                      </div>
+                      <div>
+                          <label style="display:block; font-size:11px; font-weight:800; color:var(--text-m); margin-bottom:6px;">Periodo</label>
+                          <select id="seg-cfg-periodo" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:6px; background:var(--bg); color:var(--text); font-family:'Inter', sans-serif;">
+                              <option value="Semanal">Semanal</option>
+                              <option value="Quincenal" selected>Quincenal</option>
+                              <option value="Mensual">Mensual</option>
+                          </select>
+                      </div>
+                  </div>
+                  <div style="margin-bottom:16px;">
+                      <label style="display:block; font-size:11px; font-weight:800; color:var(--text-m); margin-bottom:6px;">Ejecutivo(s) K-9</label>
+                      <input type="text" id="seg-cfg-executive" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:6px; background:var(--bg); color:var(--text); font-family:'Inter', sans-serif;" placeholder="Nombre del responsable">
+                  </div>
+                  <div style="margin-bottom:16px;">
+                      <label style="display:block; font-size:11px; font-weight:800; color:var(--text-m); margin-bottom:6px;">Contacto del Cliente</label>
+                      <input type="text" id="seg-cfg-client-contact" style="width:100%; padding:10px; border:1px solid var(--border); border-radius:6px; background:var(--bg); color:var(--text); font-family:'Inter', sans-serif;" placeholder="Nombre del enlace">
+                  </div>
+              </div>
+              <div class="modal-footer" style="padding:20px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:12px;">
+                  <button onclick="window.closeSeguimientoConfig()" style="padding:10px 16px; background:transparent; border:1px solid var(--border); color:var(--text); border-radius:6px; font-weight:700; cursor:pointer;">Cancelar</button>
+                  <button onclick="window.generateSeguimientoPDF()" style="padding:10px 16px; background:linear-gradient(135deg,#c8951a,#e8b020); color:#fff; border:none; border-radius:6px; font-weight:800; display:flex; align-items:center; gap:8px; cursor:pointer;">
+                      <i class="fas fa-file-pdf"></i> CONFIRMAR E IMPRIMIR
+                  </button>
+              </div>
+          </div>
+      </div>
+
       <!-- MODULE: INFORME DE INCIDENTES -->
       <div id="moduleIncidentes" class="module-view">
         <div id="viewIncidentesList" class="view active">
@@ -166,161 +224,13 @@
         </div>
       </div>
 
-      <!-- MODULE: BITÁCORA VIRTUAL -->
-      <div id="moduleBitacora" class="module-view">
-        <div id="viewBitacoraForm" class="view active">
-           <!-- TACTICAL HERO BANNER -->
-           <div class="dash-hero" style="min-height: 280px;">
-               <div class="dash-hero-scanline"></div>
-               <div class="dash-hero-inner">
-                   <div class="dash-hero-content">
-                       <div class="dash-corp-tag"><i class="fas fa-book"></i> BITÁCORA OPERATIVA</div>
-                       <h1>Bitácora <span class="accent">Virtual</span></h1>
-                       <p>Registro cronológico de novedades, acuerdos y supervisión técnica. Mantenga un control detallado de las operaciones diarias.</p>
-                       <div class="dash-hero-actions">
-                           <button class="btn-gold btn-lg" onclick="document.getElementById('bit-classification').focus()"><i class="fas fa-plus"></i> Nuevo Registro</button>
-                       </div>
-                   </div>
-                   <div class="dash-hero-stats">
-                       <div class="hs-card">
-                           <div class="hs-num" id="bit-stat-total">0</div>
-                           <div class="hs-label">Registros Totales</div>
-                       </div>
-                       <div class="hs-card hs-aceptable">
-                           <div class="hs-num" id="bit-stat-today">0</div>
-                           <div class="hs-label">Hoy</div>
-                       </div>
-                   </div>
-               </div>
-           </div>
-
-           <div class="bitacora-layout">
-
-               <!-- Form Panel -->
-               <aside class="bitacora-card bitacora-form-panel">
-                   <h2 class="bitacora-section-title">Registro de Actividad</h2>
-                   <form id="bitacora-form" onsubmit="window.saveBitacoraEntry(event)">
-                       <div class="form-group">
-                           <label class="bitacora-label"><i class="fas fa-calendar-day"></i> FECHA</label>
-                           <input type="date" id="bit-date" class="bitacora-input" required>
-                       </div>
-                       
-                       <div class="form-group">
-                           <label class="bitacora-label"><i class="fas fa-tags"></i> CLASIFICACIÓN</label>
-                           <select id="bit-classification" class="bitacora-select" required>
-                               <option value="" disabled selected>Seleccione Clasificación</option>
-                               <option value="NOVEDADES RECIENTES">NOVEDADES RECIENTES</option>
-                               <option value="DETALLE DE SUPERVISIÓN EJECUTIVA">DETALLE DE SUPERVISIÓN EJECUTIVA</option>
-                               <option value="ACUERDOS RECIENTES">ACUERDOS RECIENTES</option>
-                               <option value="Actualización de riesgos">Actualización de riesgos</option>
-                               <option value="SUGERENCIAS DE SEGURIDAD">SUGERENCIAS DE SEGURIDAD</option>
-                               <option value="MEJORAS OPERATIVAS">MEJORAS OPERATIVAS</option>
-                               <option value="TEMAS PENDIENTES">TEMAS PENDIENTES</option>
-                               <option value="INVERSIONES PENDIENTES">INVERSIONES PENDIENTES</option>
-                               <option value="NOTAS">NOTAS</option>
-                           </select>
-                       </div>
-
-                       <div class="form-group">
-                           <label class="bitacora-label" style="display:flex; justify-content:space-between; align-items:center;">
-                               <span><i class="fas fa-align-left"></i> DESCRIPCIÓN DETALLADA</span>
-                               <button type="button" class="btn-chat-mic" id="bit-mic" onclick="window.toggleBitacoraVoice()" style="width:24px; height:24px; font-size:10px;">
-                                   <i class="fas fa-microphone"></i>
-                               </button>
-                           </label>
-                           <textarea id="bit-description" class="bitacora-textarea" placeholder="Describa la novedad o acuerdo..." required></textarea>
-                       </div>
-
-                        <div class="form-group">
-                            <label class="bitacora-label"><i class="fas fa-camera"></i> EVIDENCIA FOTOGRÁFICA</label>
-                            <input type="file" id="bit-photos" class="bitacora-input" accept="image/*" multiple onchange="window.previewBitacoraPhotos(this)">
-                            <div id="bit-photos-preview" style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;"></div>
-                        </div>
-
-                        <button type="submit" class="btn-bitacora-save">
-                            <i class="fas fa-save"></i> GUARDAR EN BITÁCORA
-                        </button>
-                        
-                    </form>
-                </aside>
-
-                <!-- History Panel -->
-                <section class="bitacora-card bitacora-history-panel">
-                    <div class="bitacora-history-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                        <h2 class="bitacora-section-title" style="margin-bottom:0">REGISTROS DEL DÍA</h2>
-                        <div style="display:flex; gap:12px; align-items:center">
-                            <div id="bit-history-date-display" style="font-size:11px; font-weight:800; color:var(--text-m); text-transform:uppercase;"></div>
-                            <button class="btn-report-monthly" onclick="window.k9_openBitacoraReportConfig()" style="background: var(--critico); border-color: var(--critico);">
-                                <i class="fas fa-file-pdf"></i> EXPORTAR REPORTE
-                            </button>
-                        </div>
-                    </div>
-
-                   <div id="bitacora-list" style="display:flex; flex-direction:column; gap:12px; overflow-y:auto; flex:1;">
-                       <!-- Dynamic items -->
-                   </div>
-               </section>
-           </div>
+      <!-- MODULE: CALENDARIO -->
+      <div id="moduleCalendario" class="module-view">
+        <div id="viewCalendario" class="view active">
+          <!-- Managed by calendario.js -->
         </div>
       </div>
 
-      <!-- MODAL: CONFIGURACIÓN DE REPORTE BITÁCORA -->
-      <div id="modalReportConfig" class="modal-overlay" onclick="window.closeReportConfig()">
-          <div class="modal-box config-modal" onclick="event.stopPropagation()">
-              <div class="modal-header tactical">
-                  <h3><i class="fas fa-file-invoice"></i> Configuración de Reporte PDF</h3>
-                  <button class="modal-close" onclick="window.closeReportConfig()"><i class="fas fa-times"></i></button>
-              </div>
-              <div class="modal-body">
-                  <div class="form-group">
-                      <label class="bitacora-label">Nombre del Cliente / Entidad</label>
-                      <input type="text" id="cfg-client-name" class="bitacora-input" placeholder="Ej: Corporación K-9 Planta 1">
-                  </div>
-                  <div class="form-grid-2">
-                      <div class="form-group">
-                          <label class="bitacora-label">Nivel de Alerta</label>
-                          <select id="cfg-alert-level" class="bitacora-select">
-                              <option value="Bajo">Bajo</option>
-                              <option value="Medio" selected>Medio</option>
-                              <option value="Alto">Alto</option>
-                              <option value="Crítico">Crítico</option>
-                          </select>
-                      </div>
-                      <div class="form-group">
-                          <label class="bitacora-label">Ejecutivo(s) K-9</label>
-                          <input type="text" id="cfg-executive" class="bitacora-input" placeholder="Nombre del responsable">
-                      </div>
-                  </div>
-                  <div class="form-group">
-                      <label class="bitacora-label">Contacto del Cliente</label>
-                      <input type="text" id="cfg-client-contact" class="bitacora-input" placeholder="Nombre del enlace">
-                  </div>
-
-                  <!-- SECCIÓN DE FIRMA -->
-                  <div class="form-group" style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 8px; border: 1px solid var(--gold-pale);">
-                      <label class="bitacora-label" style="color: var(--gold);"><i class="fas fa-pen-nib"></i> FIRMA DEL EVALUADOR</label>
-                      <div style="display: flex; gap: 15px; align-items: center; margin-top: 10px;">
-                          <div id="bit-sig-preview" style="width: 120px; height: 60px; border: 1px dashed var(--gold); border-radius: 4px; display: flex; align-items: center; justify-content: center; background: #fff; overflow: hidden;">
-                              <i class="fas fa-image" style="color: #ccc;"></i>
-                          </div>
-                          <div style="flex: 1;">
-                              <button type="button" class="btn-gold" style="padding: 6px 12px; font-size: 11px;" onclick="document.getElementById('bit-sig-input').click()">
-                                  <i class="fas fa-upload"></i> CARGAR FIRMA
-                              </button>
-                              <input type="file" id="bit-sig-input" style="display: none;" accept="image/*" onchange="window.uploadBitacoraSignature(this)">
-                              <p style="font-size: 9px; color: var(--text-d); margin-top: 5px;">Se recomienda fondo blanco o transparente.</p>
-                          </div>
-                      </div>
-                  </div>
-              </div>
-              <div class="modal-footer">
-                  <button class="btn-ghost" onclick="window.closeReportConfig()">Cancelar</button>
-                  <button class="btn-report-gen" onclick="window.generateBitacoraPDF()">
-                      <i class="fas fa-file-pdf"></i> GUARDAR Y GENERAR PDF
-                  </button>
-              </div>
-          </div>
-      </div>
 
 
     </div> <!-- end module-container -->
@@ -384,7 +294,7 @@
             <span class="ring-label">Cumplimiento</span>
           </div>
         </div>
-        <div class="sb-section-count"><span id="sbCompleted">0</span>/17 secciones</div>
+        <div class="sb-section-count"><span id="sbCompleted">0</span>/21 secciones</div>
       </div>
       <nav class="sidebar-nav" id="sidebarNav" style="margin-top:20px;"><!-- rendered by JS --></nav>
       <div class="sidebar-actions" style="display:none;"></div>
@@ -445,9 +355,11 @@
 <script src="data.js"></script>
 <script src="app.js"></script>
 <script src="clientes.js"></script>
-<script src="bitacora.js"></script>
+
 <script src="minutas.js"></script>
+<script src="seguimiento.js"></script>
 <script src="incidentes.js"></script>
+<script src="calendario.js"></script>
 <script src="assistant.js"></script>
 <script src="photos.js"></script>
 

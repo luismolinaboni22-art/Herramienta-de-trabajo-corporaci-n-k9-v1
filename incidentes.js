@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 
 (function() {
     let incidentes = JSON.parse(localStorage.getItem('k9_incidentes') || '[]');
@@ -75,34 +75,84 @@
             `;
         }
 
+        const PRIORITY_MAP = {
+            'Crítica': { color: '#C91B38', bg: 'rgba(201,27,56,0.08)', border: 'rgba(201,27,56,0.25)', icon: 'fa-circle-exclamation' },
+            'Alta':    { color: '#D96008', bg: 'rgba(217,96,8,0.08)',  border: 'rgba(217,96,8,0.25)',  icon: 'fa-triangle-exclamation' },
+            'Media':   { color: '#C8951A', bg: 'rgba(200,149,26,0.08)',border: 'rgba(200,149,26,0.25)',icon: 'fa-circle-minus' },
+            'Baja':    { color: '#007A55', bg: 'rgba(0,122,85,0.08)',  border: 'rgba(0,122,85,0.25)',  icon: 'fa-circle-check' }
+        };
+
         return items.sort((a,b) => new Date(b.fecha) - new Date(a.fecha)).map(inc => {
-            const priorityClass = inc.prioridad === 'Crítica' ? 'badge-critico' : 
-                                 inc.prioridad === 'Alta' ? 'badge-deficiente' : 'badge-aceptable';
+            const p = PRIORITY_MAP[inc.prioridad] || PRIORITY_MAP['Media'];
+            const dateFormatted = inc.fecha ? inc.fecha.split('-').reverse().join('/') : '--/--/----';
+            const descPreview = (inc.descripcion || 'Sin descripción.').substring(0, 120) + ((inc.descripcion || '').length > 120 ? '...' : '');
+
             return `
-                <div class="eval-card">
-                    <div class="ec-header">
-                        <div class="ec-title-area">
-                            <span class="ec-badge ${priorityClass}">${inc.prioridad || 'Media'}</span>
-                            <div class="ec-name">${inc.tipo || 'Incidente General'}</div>
-                            <div class="ec-site">${inc.lugar}</div>
+                <div style="background:var(--card);border:1.5px solid var(--border);border-top:3px solid ${p.color};border-radius:14px;overflow:hidden;box-shadow:var(--shadow);transition:all 0.25s ease;display:flex;flex-direction:column;"
+                     onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='var(--shadow2)'"
+                     onmouseout="this.style.transform='';this.style.boxShadow='var(--shadow)'">
+
+                    <!-- TOP ROW -->
+                    <div style="padding:18px 20px 12px;display:flex;align-items:flex-start;justify-content:space-between;gap:14px;">
+                        <div style="flex:1;min-width:0;">
+                            <!-- Priority Badge -->
+                            <div style="display:inline-flex;align-items:center;gap:6px;background:${p.bg};border:1px solid ${p.border};color:${p.color};font-size:9px;font-weight:800;padding:3px 10px;border-radius:20px;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:10px;">
+                                <i class="fas ${p.icon}"></i> ${inc.prioridad || 'Media'}
+                            </div>
+                            <!-- Type -->
+                            <div style="font-family:'Outfit',sans-serif;font-size:16px;font-weight:900;color:var(--text);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                                ${inc.tipo || 'Incidente General'}
+                            </div>
                         </div>
-                        <div class="ec-score-box">
-                            <div class="ec-score-val">${inc.fecha.split('-').reverse().join('/')}</div>
+                        <!-- Date Block -->
+                        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;text-align:center;flex-shrink:0;">
+                            <div style="font-family:'Outfit',sans-serif;font-size:18px;font-weight:900;color:var(--navy);line-height:1;">${inc.fecha ? inc.fecha.split('-')[2] : '--'}</div>
+                            <div style="font-size:9px;font-weight:800;color:var(--text-m);text-transform:uppercase;margin-top:2px;">
+                                ${inc.fecha ? new Date(inc.fecha+'T12:00').toLocaleDateString('es-CR',{month:'short',year:'2-digit'}) : ''}
+                            </div>
                         </div>
                     </div>
-                    <div class="ec-body">
-                        <div class="ec-meta">
-                            <span><i class="fas fa-clock"></i> ${inc.hora || '--:--'}</span>
-                            <span><i class="fas fa-building"></i> ${inc.empresa || 'N/A'}</span>
+
+                    <!-- META ROW -->
+                    <div style="padding:0 20px 12px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+                        <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--text-m);">
+                            <i class="fas fa-clock" style="color:var(--gold);font-size:10px;"></i>
+                            ${inc.hora || '--:--'}
                         </div>
-                        <p style="font-size: 11px; color: #64748b; margin-top: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                            ${inc.descripcion || 'Sin descripción detallada.'}
-                        </p>
+                        <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--text-m);">
+                            <i class="fas fa-building" style="color:var(--gold);font-size:10px;"></i>
+                            ${inc.empresa || 'N/A'}
+                        </div>
+                        <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--text-m);">
+                            <i class="fas fa-location-dot" style="color:var(--gold);font-size:10px;"></i>
+                            ${inc.lugar || 'Sin ubicación'}
+                        </div>
                     </div>
-                    <div class="ec-footer">
-                        <button class="btn-pdf-red" style="padding: 6px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onclick="window.exportIncidentePDF('${inc.id}')" title="Exportar PDF"><i class="fas fa-file-pdf"></i> PDF</button>
-                        <button class="btn-edit-blue" style="padding: 6px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;" onclick="window.openIncidente('${inc.id}')" title="Editar Informe"><i class="fas fa-edit"></i> Editar</button>
-                        <button class="btn-icon del" onclick="window.deleteIncidente('${inc.id}')" title="Eliminar"><i class="fas fa-trash"></i></button>
+
+                    <!-- DESCRIPTION -->
+                    <div style="padding:0 20px 16px;">
+                        <div style="background:var(--bg2);border-radius:8px;padding:12px 14px;font-size:11px;color:var(--text-m);line-height:1.6;border-left:3px solid ${p.color};">
+                            ${descPreview}
+                        </div>
+                    </div>
+
+                    <!-- FOOTER ACTIONS -->
+                    <div style="padding:12px 20px;background:var(--bg2);border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;">
+                        <button onclick="window.exportIncidentePDF('${inc.id}')"
+                            style="display:inline-flex;align-items:center;gap:7px;background:#C91B38;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-weight:700;font-size:11px;cursor:pointer;letter-spacing:0.04em;transition:all 0.2s;"
+                            onmouseover="this.style.background='#a51530'" onmouseout="this.style.background='#C91B38'">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </button>
+                        <button onclick="window.openIncidente('${inc.id}')"
+                            style="display:inline-flex;align-items:center;gap:7px;background:#16254A;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-weight:700;font-size:11px;cursor:pointer;letter-spacing:0.04em;transition:all 0.2s;"
+                            onmouseover="this.style.background='#0D172F'" onmouseout="this.style.background='#16254A'">
+                            <i class="fas fa-pen-to-square"></i> Editar
+                        </button>
+                        <button onclick="window.deleteIncidente('${inc.id}')"
+                            style="display:inline-flex;align-items:center;gap:7px;background:transparent;color:var(--text-d);border:1.5px solid var(--border);padding:8px 12px;border-radius:8px;font-weight:700;font-size:11px;cursor:pointer;margin-left:auto;transition:all 0.2s;"
+                            onmouseover="this.style.borderColor='var(--critico)';this.style.color='var(--critico)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-d)'">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
                 </div>
             `;

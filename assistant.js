@@ -170,9 +170,7 @@
         if (input.includes('riesgos') || input.includes('evaluación')) {
             respond("Cambiando a Módulo de Análisis de Riesgos. Acceso concedido.", () => switchModule('risks'));
         } 
-        else if (input.includes('bitácora') || input.includes('novedades')) {
-            respond("Abriendo Bitácora Virtual. Cargando registros operativos.", () => switchModule('bitacora'));
-        } 
+ 
         else if (input.includes('minutas') || input.includes('reunión')) {
             respond("Accediendo a Minutas de Reunión. Historial en pantalla.", () => switchModule('minutas'));
         }
@@ -266,12 +264,7 @@
                 setTimeout(() => { if(window.newMinuta) window.newMinuta(); }, 500);
             });
         }
-        else if (input.includes('reporte mensual') || input.includes('generar reporte')) {
-            respond("Abriendo configuración de reporte oficial. Defina el rango de fechas.", () => {
-                switchModule('bitacora');
-                setTimeout(() => { if(window.k9_openBitacoraReportConfig) window.k9_openBitacoraReportConfig(); }, 500);
-            });
-        }
+
 
         // Dictado directamente en el campo activo
         else {
