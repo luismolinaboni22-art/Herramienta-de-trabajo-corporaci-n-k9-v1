@@ -15,7 +15,7 @@
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognition = new SpeechRecognition();
         recognition.lang = 'es-CR';
-        recognition.continuous = false;
+        recognition.continuous = true;
         recognition.interimResults = false;
 
         recognition.onresult = (event) => {

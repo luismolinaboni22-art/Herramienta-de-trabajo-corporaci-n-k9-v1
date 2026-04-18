@@ -1787,7 +1787,10 @@ function renderRiskRows(riesgos) {
       </tr>
       <tr id="rrow_med_${i}" style="border-bottom: 1px solid #eee;">
         <td colspan="6" style="padding-top:0; padding-bottom:10px;">
-          <input type="text" placeholder="Medidas de mitigación implementadas para reducir el riesgo..." value="${r.medidas || ''}" oninput="updateRiskVal(${i},'medidas',this.value)" style="width:100%;background:#f9fafd;border:1px solid #e0e3ee;border-radius:4px;padding:5px 8px;font-size:11px;color:var(--text);"/>
+          <div style="position:relative;">
+            <input type="text" id="rm_med_${i}" placeholder="Medidas de mitigación implementadas para reducir el riesgo..." value="${r.medidas || ''}" oninput="updateRiskVal(${i},'medidas',this.value)" style="width:100%;background:#f9fafd;border:1px solid #e0e3ee;border-radius:4px;padding:5px 30px 5px 8px;font-size:11px;color:var(--text);"/>
+            <button class="btn-field-mic-ui" onclick="activateVoiceField('rm_med_${i}')" style="position:absolute;right:5px;top:50%;transform:translateY(-50%);border:none;background:none;color:var(--navy);cursor:pointer;"><i class="fas fa-microphone"></i></button>
+          </div>
         </td>
       </tr>
     `;
